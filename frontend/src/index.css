@@ -1,0 +1,159 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply bg-deepr-bg text-deepr-text min-h-screen antialiased;
+  }
+  
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-deepr-bg;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-deepr-border rounded-full;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-deepr-text-muted;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-deepr-card border border-deepr-border rounded-xl p-6 transition-all duration-300;
+  }
+  
+  .card-hover {
+    @apply hover:border-deepr-accent/50 hover:shadow-lg hover:shadow-deepr-accent/10;
+  }
+  
+  .btn-primary {
+    @apply bg-deepr-accent hover:bg-deepr-accent-hover text-white font-medium px-6 py-3 rounded-lg transition-all duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  
+  .btn-secondary {
+    @apply bg-deepr-card border border-deepr-border hover:border-deepr-accent/50 text-deepr-text font-medium px-4 py-2 rounded-lg transition-all duration-200;
+  }
+  
+  .input-field {
+    @apply w-full bg-deepr-bg border border-deepr-border rounded-lg px-4 py-3 text-deepr-text placeholder-deepr-text-muted focus:outline-none focus:border-deepr-accent focus:ring-1 focus:ring-deepr-accent transition-all duration-200;
+  }
+  
+  .textarea-field {
+    @apply w-full bg-deepr-bg border border-deepr-border rounded-lg px-4 py-3 text-deepr-text placeholder-deepr-text-muted focus:outline-none focus:border-deepr-accent focus:ring-1 focus:ring-deepr-accent transition-all duration-200 resize-none;
+  }
+  
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+  }
+  
+  .badge-success {
+    @apply bg-deepr-success/20 text-deepr-success;
+  }
+  
+  .badge-warning {
+    @apply bg-deepr-warning/20 text-deepr-warning;
+  }
+  
+  .badge-error {
+    @apply bg-deepr-error/20 text-deepr-error;
+  }
+  
+  .badge-info {
+    @apply bg-deepr-info/20 text-deepr-info;
+  }
+  
+  .badge-accent {
+    @apply bg-deepr-accent/20 text-deepr-accent;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-deepr-accent to-deepr-info;
+  }
+  
+  .glow-accent {
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+  }
+  
+  .glow-success {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+  }
+}
+
+/* Markdown content styling */
+.markdown-content h1 {
+  @apply text-2xl font-bold mb-4 mt-6 text-deepr-text;
+}
+
+.markdown-content h2 {
+  @apply text-xl font-semibold mb-3 mt-5 text-deepr-text;
+}
+
+.markdown-content h3 {
+  @apply text-lg font-medium mb-2 mt-4 text-deepr-text;
+}
+
+.markdown-content p {
+  @apply mb-3 leading-relaxed text-deepr-text-muted;
+}
+
+.markdown-content ul {
+  @apply list-disc list-inside mb-4 space-y-1 text-deepr-text-muted;
+}
+
+.markdown-content ol {
+  @apply list-decimal list-inside mb-4 space-y-1 text-deepr-text-muted;
+}
+
+.markdown-content li {
+  @apply leading-relaxed;
+}
+
+.markdown-content strong {
+  @apply font-semibold text-deepr-text;
+}
+
+.markdown-content code {
+  @apply bg-deepr-bg px-2 py-1 rounded text-sm text-deepr-accent;
+}
+
+.markdown-content pre {
+  @apply bg-deepr-bg p-4 rounded-lg overflow-x-auto mb-4;
+}
+
+.markdown-content table {
+  @apply w-full border-collapse mb-4;
+}
+
+.markdown-content th {
+  @apply bg-deepr-bg border border-deepr-border px-4 py-2 text-left font-semibold text-deepr-text;
+}
+
+.markdown-content td {
+  @apply border border-deepr-border px-4 py-2 text-deepr-text-muted;
+}
+
+.markdown-content blockquote {
+  @apply border-l-4 border-deepr-accent pl-4 my-4 italic text-deepr-text-muted;
+}
+
+/* Animation delays for staggered effects */
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }

@@ -1,0 +1,197 @@
+import express from 'express';
+import cors from 'cors';
+import { config } from './config.js';
+import { mockCouncilResponses, mockDxOResponses, simulateDelay } from './mockData.js';
+import { processCouncilRequest, processDxORequest } from './llmService.js';
+
+const app = express();
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    mode: config.useMock ? 'mock' : 'live',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Council endpoint
+app.post('/api/council', async (req, res) => {
+  try {
+    const { question } = req.body;
+    
+    if (!question) {
+      return res.status(400).json({ error: 'Question is required' });
+    }
+
+    console.log(`[Council] Processing question: ${question.substring(0, 50)}...`);
+
+    if (config.useMock) {
+      // Simulate API delay for realistic demo feel
+      await simulateDelay(2000);
+      
+      return res.json({
+        success: true,
+        mode: 'mock',
+        question,
+        data: mockCouncilResponses
+      });
+    }
+
+    // Real LLM processing
+    const result = await processCouncilRequest(question);
+    
+    return res.json({
+      success: true,
+      mode: 'live',
+      question,
+      data: result
+    });
+
+  } catch (error) {
+    console.error('[Council] Error:', error);
+    res.status(500).json({ 
+      error: 'Failed to process council request',
+      message: error.message 
+    });
+  }
+});
+
+// DxO endpoint
+app.post('/api/dxo', async (req, res) => {
+  try {
+    const { question } = req.body;
+    
+    if (!question) {
+      return res.status(400).json({ error: 'Question is required' });
+    }
+
+    console.log(`[DxO] Processing question: ${question.substring(0, 50)}...`);
+
+    if (config.useMock) {
+      // Simulate API delay for realistic demo feel
+      await simulateDelay(2500);
+      
+      return res.json({
+        success: true,
+        mode: 'mock',
+        question,
+        data: mockDxOResponses
+      });
+    }
+
+    // Real LLM processing
+    const result = await processDxORequest(question);
+    
+    return res.json({
+      success: true,
+      mode: 'live',
+      question,
+      data: result
+    });
+
+  } catch (error) {
+    console.error('[DxO] Error:', error);
+    res.status(500).json({ 
+      error: 'Failed to process DxO request',
+      message: error.message 
+    });
+  }
+});
+
+// Streaming endpoint for Council (progressive loading)
+app.post('/api/council/stream', async (req, res) => {
+  try {
+    const { question } = req.body;
+    
+    if (!question) {
+      return res.status(400).json({ error: 'Question is required' });
+    }
+
+    // Set headers for Server-Sent Events
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    const members = mockCouncilResponses.members;
+    
+    // Send each member's response with delay
+    for (let i = 0; i < members.length; i++) {
+      await simulateDelay(1000 + Math.random() * 1000);
+      res.write(`data: ${JSON.stringify({ type: 'member', data: members[i] })}\n\n`);
+    }
+
+    // Send chairman response
+    await simulateDelay(1500);
+    res.write(`data: ${JSON.stringify({ type: 'chairman', data: mockCouncilResponses.chairman })}\n\n`);
+    
+    // Signal completion
+    res.write(`data: ${JSON.stringify({ type: 'complete' })}\n\n`);
+    res.end();
+
+  } catch (error) {
+    console.error('[Council Stream] Error:', error);
+    res.write(`data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`);
+    res.end();
+  }
+});
+
+// Streaming endpoint for DxO (sequential role loading)
+app.post('/api/dxo/stream', async (req, res) => {
+  try {
+    const { question } = req.body;
+    
+    if (!question) {
+      return res.status(400).json({ error: 'Question is required' });
+    }
+
+    // Set headers for Server-Sent Events
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    const roles = ['leadResearcher', 'criticalReviewer', 'domainExpert', 'dataAnalyst', 'finalDecision'];
+    
+    // Send each role's response sequentially with delay
+    for (const role of roles) {
+      await simulateDelay(1500 + Math.random() * 1000);
+      res.write(`data: ${JSON.stringify({ type: role, data: mockDxOResponses[role] })}\n\n`);
+    }
+    
+    // Signal completion
+    res.write(`data: ${JSON.stringify({ type: 'complete' })}\n\n`);
+    res.end();
+
+  } catch (error) {
+    console.error('[DxO Stream] Error:', error);
+    res.write(`data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`);
+    res.end();
+  }
+});
+
+// Configuration endpoint (for debug/demo)
+app.get('/api/config', (req, res) => {
+  res.json({
+    useMock: config.useMock,
+    councilMembers: config.councilMembers.map(m => ({ id: m.id, name: m.name, provider: m.provider })),
+    dxoRoles: config.dxoRoles
+  });
+});
+
+// Start server
+app.listen(config.port, () => {
+  console.log(`\n🚀 DeepR Backend Orchestrator`);
+  console.log(`   Running on: http://localhost:${config.port}`);
+  console.log(`   Mode: ${config.useMock ? '🎭 Mock Data' : '🔴 Live LLM APIs'}`);
+  console.log(`\n   Endpoints:`);
+  console.log(`   - POST /api/council - LLM Council framework`);
+  console.log(`   - POST /api/dxo - DxO Decision framework`);
+  console.log(`   - POST /api/council/stream - Streaming council responses`);
+  console.log(`   - POST /api/dxo/stream - Streaming DxO responses`);
+  console.log(`   - GET /api/health - Health check`);
+  console.log(`   - GET /api/config - Configuration info\n`);
+});
