@@ -2,12 +2,9 @@ import { Settings, History, LogOut } from 'lucide-react';
 import { ModeToggle } from './ModeToggle';
 
 const navItems = [
-  { id: 'superchat', label: 'Super Chat' },
+  { id: 'superchat', label: 'Xiao Mei' },
   { id: 'council', label: 'Council' },
   { id: 'dxo', label: 'DxO' },
-  { id: 'ensemble', label: 'Ensemble' },
-  { id: 'shoppr', label: 'Shoppr' },
-  { id: 'frontier', label: 'Frontier' },
 ];
 
 export function Header({ mode, onModeChange }) {
