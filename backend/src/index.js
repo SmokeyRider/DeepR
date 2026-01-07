@@ -1,8 +1,13 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { config } from './config.js';
 import { mockCouncilResponses, mockDxOResponses, simulateDelay } from './mockData.js';
 import { processCouncilRequest, processDxORequest } from './llmService.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
@@ -180,6 +185,17 @@ app.get('/api/config', (req, res) => {
     councilMembers: config.councilMembers.map(m => ({ id: m.id, name: m.name, provider: m.provider })),
     dxoRoles: config.dxoRoles
   });
+});
+
+// Serve static files in production
+const distPath = path.join(__dirname, '../../frontend/dist');
+app.use(express.static(distPath));
+
+// SPA fallback - serve index.html for all non-API routes
+app.get('*', (req, res) => {
+  if (!req.path.startsWith('/api')) {
+    res.sendFile(path.join(distPath, 'index.html'));
+  }
 });
 
 // Start server

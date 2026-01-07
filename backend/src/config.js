@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export const config = {
-  port: process.env.PORT || 3001,
+  port: process.env.PORT || (process.env.NODE_ENV === 'production' ? 5000 : 3001),
   useMock: process.env.USE_MOCK === 'true',
   openai: {
     apiKey: process.env.OPENAI_API_KEY,
