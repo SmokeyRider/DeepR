@@ -182,7 +182,8 @@ app.post('/api/dxo/stream', async (req, res) => {
 app.get('/api/config', (req, res) => {
   res.json({
     useMock: config.useMock,
-    councilMembers: config.councilMembers.map(m => ({ id: m.id, name: m.name, provider: m.provider })),
+    availableModels: config.availableModels,
+    councilMembers: config.councilMembers.map(m => ({ id: m.id, name: m.name, model: m.model, provider: m.provider, color: m.color })),
     dxoRoles: config.dxoRoles
   });
 });

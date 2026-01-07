@@ -9,7 +9,7 @@ channel = "stable-25_05"
 [userenv]
 
 [userenv.shared]
-USE_MOCK = "true"
+USE_MOCK = "false"
 
 [workflows]
 runButton = "Project"

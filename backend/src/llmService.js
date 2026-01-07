@@ -3,11 +3,12 @@ import { config } from './config.js';
 
 let openaiClient = null;
 
-// Initialize OpenAI client
+// Initialize OpenAI client with Replit AI Integrations
 const getOpenAIClient = () => {
-  if (!openaiClient && config.openai.apiKey) {
+  if (!openaiClient && config.replitAI.apiKey && config.replitAI.baseURL) {
     openaiClient = new OpenAI({
-      apiKey: config.openai.apiKey,
+      apiKey: config.replitAI.apiKey,
+      baseURL: config.replitAI.baseURL,
     });
   }
   return openaiClient;
@@ -139,20 +140,19 @@ Synthesize a final decision that:
 Respond in markdown format with a clear recommendation and list of revisions made.`
 };
 
-// Call LLM API
-export const callLLM = async (prompt, model = config.openai.defaultModel) => {
+// Call LLM API using Replit AI Integrations
+export const callLLM = async (prompt, model = config.replitAI.defaultModel) => {
   const client = getOpenAIClient();
   
   if (!client) {
-    throw new Error('OpenAI client not configured');
+    throw new Error('Replit AI client not configured. Check AI_INTEGRATIONS_OPENAI_API_KEY and AI_INTEGRATIONS_OPENAI_BASE_URL.');
   }
 
   try {
     const response = await client.chat.completions.create({
       model,
       messages: [{ role: 'user', content: prompt }],
-      temperature: 0.7,
-      max_tokens: 2000,
+      max_completion_tokens: 2048,
     });
 
     return response.choices[0].message.content;
@@ -199,7 +199,7 @@ export const processCouncilRequest = async (question) => {
 
   // Get chairman synthesis
   const chairmanPrompt = getChairmanPrompt(question, memberResponses);
-  const chairmanResponse = await callLLM(chairmanPrompt, config.openai.chairmanModel);
+  const chairmanResponse = await callLLM(chairmanPrompt, config.replitAI.chairmanModel);
   
   let chairman;
   try {
