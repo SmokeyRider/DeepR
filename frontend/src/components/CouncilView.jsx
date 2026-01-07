@@ -17,8 +17,8 @@ export function CouncilView() {
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState(null);
   const [error, setError] = useState(null);
-  const [selectedMembers, setSelectedMembers] = useState(['gpt-5.1', 'claude-opus', 'gemini-pro']);
-  const [chairmanModel, setChairmanModel] = useState('claude-opus');
+  const [selectedMembers, setSelectedMembers] = useState(['gpt-5.1', 'gpt-4.1', 'o3-mini']);
+  const [chairmanModel, setChairmanModel] = useState('gpt-5.1');
   const [loadingStates, setLoadingStates] = useState({
     members: false,
     chairman: false,

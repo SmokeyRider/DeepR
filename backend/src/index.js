@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { config } from './config.js';
 import { mockCouncilResponses, mockDxOResponses, simulateDelay } from './mockData.js';
@@ -188,16 +189,18 @@ app.get('/api/config', (req, res) => {
   });
 });
 
-// Serve static files in production
+// Serve static files in production (only if dist folder exists)
 const distPath = path.join(__dirname, '../../frontend/dist');
-app.use(express.static(distPath));
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath));
 
-// SPA fallback - serve index.html for all non-API routes
-app.get('*', (req, res) => {
-  if (!req.path.startsWith('/api')) {
-    res.sendFile(path.join(distPath, 'index.html'));
-  }
-});
+  // SPA fallback - serve index.html for all non-API routes
+  app.get('*', (req, res) => {
+    if (!req.path.startsWith('/api')) {
+      res.sendFile(path.join(distPath, 'index.html'));
+    }
+  });
+}
 
 // Start server
 app.listen(config.port, () => {
