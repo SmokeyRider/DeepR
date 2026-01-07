@@ -162,12 +162,47 @@ export const callLLM = async (prompt, model = config.replitAI.defaultModel) => {
   }
 };
 
-// Process council request
-export const processCouncilRequest = async (question) => {
-  const members = config.councilMembers;
+// Model colors for display
+const modelColors = {
+  'gpt-5.2': '#10B981',
+  'gpt-5.1': '#8B5CF6',
+  'gpt-5': '#3B82F6',
+  'gpt-5-mini': '#F59E0B',
+  'gpt-4.1': '#EF4444',
+  'gpt-4o': '#EC4899',
+  'o3': '#14B8A6',
+  'o3-mini': '#6366F1',
+};
+
+// Process council request with selected members
+export const processCouncilRequest = async (question, selectedMemberIds = null, chairmanModelId = null) => {
+  // Build member list from selected IDs, falling back to defaults
+  const memberIds = selectedMemberIds?.length 
+    ? selectedMemberIds 
+    : config.councilMembers.map(m => m.id);
+  
+  // Map selected IDs to member configs from available models
+  const members = memberIds.map(id => {
+    const available = config.availableModels.find(m => m.id === id);
+    if (available) {
+      return {
+        id: available.id,
+        name: available.name,
+        model: available.id,
+        provider: available.provider,
+        color: modelColors[available.id] || '#6B7280'
+      };
+    }
+    return null;
+  }).filter(Boolean);
+
+  if (members.length === 0) {
+    throw new Error('No valid council members selected');
+  }
+
   const memberResponses = [];
 
-  // Get responses from all council members in parallel
+  // Get responses from all selected council members in parallel
   const memberPromises = members.map(async (member) => {
     const prompt = getCouncilMemberPrompt(question, member);
     const response = await callLLM(prompt, member.model);
@@ -197,9 +232,13 @@ export const processCouncilRequest = async (question) => {
   const responses = await Promise.all(memberPromises);
   memberResponses.push(...responses);
 
+  // Use specified chairman model or fall back to default
+  const chairmanModel = chairmanModelId || config.replitAI.chairmanModel;
+  const chairmanInfo = config.availableModels.find(m => m.id === chairmanModel);
+
   // Get chairman synthesis
   const chairmanPrompt = getChairmanPrompt(question, memberResponses);
-  const chairmanResponse = await callLLM(chairmanPrompt, config.replitAI.chairmanModel);
+  const chairmanResponse = await callLLM(chairmanPrompt, chairmanModel);
   
   let chairman;
   try {
@@ -216,8 +255,8 @@ export const processCouncilRequest = async (question) => {
   return {
     members: memberResponses,
     chairman: {
-      name: 'Chairman',
-      model: 'Claude Opus 4.5',
+      name: 'Chairperson',
+      model: chairmanInfo?.name || chairmanModel,
       ...chairman
     }
   };

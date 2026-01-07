@@ -28,13 +28,15 @@ app.get('/api/health', (req, res) => {
 // Council endpoint
 app.post('/api/council', async (req, res) => {
   try {
-    const { question } = req.body;
+    const { question, selectedMembers, chairmanModel } = req.body;
     
     if (!question) {
       return res.status(400).json({ error: 'Question is required' });
     }
 
     console.log(`[Council] Processing question: ${question.substring(0, 50)}...`);
+    console.log(`[Council] Selected members: ${selectedMembers?.join(', ') || 'default'}`);
+    console.log(`[Council] Chairman model: ${chairmanModel || 'default'}`);
 
     if (config.useMock) {
       // Simulate API delay for realistic demo feel
@@ -48,8 +50,8 @@ app.post('/api/council', async (req, res) => {
       });
     }
 
-    // Real LLM processing
-    const result = await processCouncilRequest(question);
+    // Real LLM processing with selected members
+    const result = await processCouncilRequest(question, selectedMembers, chairmanModel);
     
     return res.json({
       success: true,
