@@ -4,7 +4,6 @@ import { QuestionInput } from './QuestionInput';
 import { RoleCard } from './RoleCard';
 import { FinalDecisionCard } from './FinalDecisionCard';
 import { DxORoleSelector } from './DxORoleSelector';
-import { ModeIndicator } from './ModeToggle';
 
 const defaultRoles = [
   { id: 'lead', name: 'Lead Researcher', model: 'gpt-5.1', focus: 'Primary analysis and synthesis', instructions: 'Conduct thorough research analysis, identify key findings and patterns.' },
@@ -131,7 +130,6 @@ export function DxOView() {
     <div className="space-y-8">
       {/* Header */}
       <div className="text-center space-y-4">
-        <ModeIndicator mode="dxo" />
         <h1 className="text-4xl md:text-5xl font-bold text-gradient">
           DxO Decision Orchestrator
         </h1>

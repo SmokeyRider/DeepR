@@ -4,7 +4,6 @@ import { QuestionInput } from './QuestionInput';
 import { CouncilMemberCard } from './CouncilMemberCard';
 import { ChairmanCard } from './ChairmanCard';
 import { CouncilMemberSelector } from './CouncilMemberSelector';
-import { ModeIndicator } from './ModeToggle';
 
 const howItWorks = [
   { step: 1, title: 'Ask Your Question', description: 'Enter your research question or topic for the council to deliberate' },
@@ -74,7 +73,6 @@ export function CouncilView() {
     <div className="space-y-8">
       {/* Header */}
       <div className="text-center space-y-4">
-        <ModeIndicator mode="council" />
         <h1 className="text-4xl md:text-5xl font-bold text-gradient">
           AI LLM Council
         </h1>
