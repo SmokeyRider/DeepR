@@ -5,7 +5,7 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { config } from './config.js';
 import { mockCouncilResponses, mockDxOResponses, simulateDelay } from './mockData.js';
-import { processCouncilRequest, processDxORequest } from './llmService.js';
+import { processCouncilRequest, processDxORequest, processDxORequestStreaming } from './llmService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -157,17 +157,26 @@ app.post('/api/dxo/stream', async (req, res) => {
       return res.status(400).json({ error: 'Question is required' });
     }
 
+    console.log(`[DxO Stream] Processing question: ${question.substring(0, 50)}...`);
+
     // Set headers for Server-Sent Events
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
 
-    const roles = ['leadResearcher', 'criticalReviewer', 'domainExpert', 'dataAnalyst', 'finalDecision'];
-    
-    // Send each role's response sequentially with delay
-    for (const role of roles) {
-      await simulateDelay(1500 + Math.random() * 1000);
-      res.write(`data: ${JSON.stringify({ type: role, data: mockDxOResponses[role] })}\n\n`);
+    if (config.useMock) {
+      const roles = ['leadResearcher', 'criticalReviewer', 'domainExpert', 'dataAnalyst', 'finalDecision'];
+      
+      // Send each role's response sequentially with delay
+      for (const role of roles) {
+        await simulateDelay(1500 + Math.random() * 1000);
+        res.write(`data: ${JSON.stringify({ type: role, data: mockDxOResponses[role] })}\n\n`);
+      }
+    } else {
+      // Live LLM processing with streaming
+      await processDxORequestStreaming(question, (roleType, roleData) => {
+        res.write(`data: ${JSON.stringify({ type: roleType, data: roleData })}\n\n`);
+      });
     }
     
     // Signal completion

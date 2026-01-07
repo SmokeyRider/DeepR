@@ -325,3 +325,64 @@ export const processDxORequest = async (question) => {
     }
   };
 };
+
+// Process DxO request with streaming (sends each role as it completes)
+export const processDxORequestStreaming = async (question, onRoleComplete) => {
+  // Step 1: Lead Researcher
+  const leadPrompt = getDxOPrompts.lead(question);
+  const leadContent = await callLLM(leadPrompt);
+  onRoleComplete('leadResearcher', {
+    role: 'Lead Researcher',
+    icon: '🔬',
+    focus: 'Primary analysis and synthesis',
+    content: leadContent,
+    color: '#8B5CF6'
+  });
+
+  // Step 2: Critical Reviewer
+  const reviewerPrompt = getDxOPrompts.reviewer(question, leadContent);
+  const reviewerContent = await callLLM(reviewerPrompt);
+  onRoleComplete('criticalReviewer', {
+    role: 'Critical Reviewer',
+    icon: '🔍',
+    focus: 'Identify gaps and weaknesses',
+    content: reviewerContent,
+    color: '#EF4444'
+  });
+
+  // Step 3: Domain Expert
+  const expertPrompt = getDxOPrompts.expert(question, `Lead's Analysis:\n${leadContent}\n\nReviewer's Critique:\n${reviewerContent}`);
+  const expertContent = await callLLM(expertPrompt);
+  onRoleComplete('domainExpert', {
+    role: 'Domain Expert',
+    icon: '📚',
+    focus: 'Deep domain knowledge',
+    content: expertContent,
+    color: '#3B82F6'
+  });
+
+  // Step 4: Data Analyst
+  const analystPrompt = getDxOPrompts.analyst(question, `Lead's Analysis:\n${leadContent}\n\nReviewer's Critique:\n${reviewerContent}\n\nExpert Input:\n${expertContent}`);
+  const analystContent = await callLLM(analystPrompt);
+  onRoleComplete('dataAnalyst', {
+    role: 'Data Analyst',
+    icon: '📊',
+    focus: 'Quantitative reasoning',
+    content: analystContent,
+    color: '#10B981'
+  });
+
+  // Step 5: Final Decision
+  const finalPrompt = getDxOPrompts.final(question, 
+    `Lead's Analysis:\n${leadContent}\n\nReviewer's Critique:\n${reviewerContent}\n\nExpert Input:\n${expertContent}\n\nAnalyst's Data:\n${analystContent}`
+  );
+  const finalContent = await callLLM(finalPrompt);
+  onRoleComplete('finalDecision', {
+    role: 'Final Decision',
+    icon: '✨',
+    title: 'Synthesized Recommendation',
+    content: finalContent,
+    color: '#F59E0B',
+    revisions: []
+  });
+};
