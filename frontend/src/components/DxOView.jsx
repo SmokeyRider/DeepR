@@ -44,13 +44,15 @@ export function DxOView() {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let partialResults = {};
+      let buffer = '';
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const text = decoder.decode(value);
-        const lines = text.split('\n');
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
 
         for (const line of lines) {
           if (line.startsWith('data: ')) {
@@ -65,12 +67,28 @@ export function DxOView() {
               } else {
                 partialResults = { ...partialResults, [data.type]: data.data };
                 setResults({ ...partialResults });
-                setLoadingPhase(phases[phases.indexOf(data.type) + 1] || null);
+                const currentIndex = phases.indexOf(data.type);
+                setLoadingPhase(currentIndex < phases.length - 1 ? phases[currentIndex + 1] : null);
               }
             } catch (e) {
-              // Skip invalid JSON lines
+              console.warn('Failed to parse SSE data:', line, e);
             }
           }
+        }
+      }
+      
+      if (buffer.startsWith('data: ')) {
+        try {
+          const data = JSON.parse(buffer.slice(6));
+          if (data.type === 'complete') {
+            setIsLoading(false);
+            setLoadingPhase(null);
+          } else if (data.type !== 'error') {
+            partialResults = { ...partialResults, [data.type]: data.data };
+            setResults({ ...partialResults });
+          }
+        } catch (e) {
+          // Ignore incomplete final buffer
         }
       }
     } catch (err) {

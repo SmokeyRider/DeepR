@@ -328,9 +328,11 @@ export const processDxORequest = async (question) => {
 
 // Process DxO request with streaming (sends each role as it completes)
 export const processDxORequestStreaming = async (question, onRoleComplete) => {
+  console.log('[DxO] Step 1: Lead Researcher starting...');
   // Step 1: Lead Researcher
   const leadPrompt = getDxOPrompts.lead(question);
   const leadContent = await callLLM(leadPrompt);
+  console.log('[DxO] Step 1: Lead Researcher complete, sending response...');
   onRoleComplete('leadResearcher', {
     role: 'Lead Researcher',
     icon: '🔬',
@@ -339,9 +341,11 @@ export const processDxORequestStreaming = async (question, onRoleComplete) => {
     color: '#8B5CF6'
   });
 
+  console.log('[DxO] Step 2: Critical Reviewer starting...');
   // Step 2: Critical Reviewer
   const reviewerPrompt = getDxOPrompts.reviewer(question, leadContent);
   const reviewerContent = await callLLM(reviewerPrompt);
+  console.log('[DxO] Step 2: Critical Reviewer complete, sending response...');
   onRoleComplete('criticalReviewer', {
     role: 'Critical Reviewer',
     icon: '🔍',
@@ -350,9 +354,11 @@ export const processDxORequestStreaming = async (question, onRoleComplete) => {
     color: '#EF4444'
   });
 
+  console.log('[DxO] Step 3: Domain Expert starting...');
   // Step 3: Domain Expert
   const expertPrompt = getDxOPrompts.expert(question, `Lead's Analysis:\n${leadContent}\n\nReviewer's Critique:\n${reviewerContent}`);
   const expertContent = await callLLM(expertPrompt);
+  console.log('[DxO] Step 3: Domain Expert complete, sending response...');
   onRoleComplete('domainExpert', {
     role: 'Domain Expert',
     icon: '📚',
@@ -361,9 +367,11 @@ export const processDxORequestStreaming = async (question, onRoleComplete) => {
     color: '#3B82F6'
   });
 
+  console.log('[DxO] Step 4: Data Analyst starting...');
   // Step 4: Data Analyst
   const analystPrompt = getDxOPrompts.analyst(question, `Lead's Analysis:\n${leadContent}\n\nReviewer's Critique:\n${reviewerContent}\n\nExpert Input:\n${expertContent}`);
   const analystContent = await callLLM(analystPrompt);
+  console.log('[DxO] Step 4: Data Analyst complete, sending response...');
   onRoleComplete('dataAnalyst', {
     role: 'Data Analyst',
     icon: '📊',
@@ -372,11 +380,13 @@ export const processDxORequestStreaming = async (question, onRoleComplete) => {
     color: '#10B981'
   });
 
+  console.log('[DxO] Step 5: Final Decision starting...');
   // Step 5: Final Decision
   const finalPrompt = getDxOPrompts.final(question, 
     `Lead's Analysis:\n${leadContent}\n\nReviewer's Critique:\n${reviewerContent}\n\nExpert Input:\n${expertContent}\n\nAnalyst's Data:\n${analystContent}`
   );
   const finalContent = await callLLM(finalPrompt);
+  console.log('[DxO] Step 5: Final Decision complete, sending response...');
   onRoleComplete('finalDecision', {
     role: 'Final Decision',
     icon: '✨',
