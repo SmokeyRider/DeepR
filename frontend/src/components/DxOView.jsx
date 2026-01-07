@@ -7,10 +7,10 @@ import { DxORoleSelector } from './DxORoleSelector';
 import { ModeIndicator } from './ModeToggle';
 
 const defaultRoles = [
-  { id: 'lead', name: 'Lead Researcher', model: 'claude-opus', focus: 'Primary analysis and synthesis' },
-  { id: 'reviewer', name: 'Critical Reviewer', model: 'gpt-5.1', focus: 'Identify gaps and weaknesses' },
-  { id: 'expert', name: 'Domain Expert', model: 'gemini-pro', focus: 'Deep domain knowledge' },
-  { id: 'analyst', name: 'Data Analyst', model: 'kimi-k2', focus: 'Quantitative reasoning' },
+  { id: 'lead', name: 'Lead Researcher', model: 'gpt-5.1', focus: 'Primary analysis and synthesis', instructions: 'Conduct thorough research analysis, identify key findings and patterns.' },
+  { id: 'reviewer', name: 'Critical Reviewer', model: 'gpt-4.1', focus: 'Identify gaps and weaknesses', instructions: 'Critically evaluate the research, identify methodological issues and limitations.' },
+  { id: 'expert', name: 'Domain Expert', model: 'o3-mini', focus: 'Deep domain knowledge', instructions: 'Provide specialized expertise and context from the relevant field.' },
+  { id: 'analyst', name: 'Data Analyst', model: 'gpt-5', focus: 'Quantitative reasoning', instructions: 'Focus on data, statistics, and quantitative aspects of the problem.' },
 ];
 
 export function DxOView() {

@@ -1,45 +1,5 @@
-import { useState } from 'react';
-import { Plus, X } from 'lucide-react';
-
-const defaultRoles = [
-  { 
-    id: 'lead', 
-    name: 'Lead Researcher', 
-    model: 'claude-opus', 
-    focus: 'Primary analysis and synthesis',
-    instructions: 'Conduct thorough research analysis, identify key findings and patterns.'
-  },
-  { 
-    id: 'reviewer', 
-    name: 'Critical Reviewer', 
-    model: 'gpt-5.1', 
-    focus: 'Identify gaps and weaknesses',
-    instructions: 'Critically evaluate the research, identify methodological issues and limitations.'
-  },
-  { 
-    id: 'expert', 
-    name: 'Domain Expert', 
-    model: 'gemini-pro', 
-    focus: 'Deep domain knowledge',
-    instructions: 'Provide specialized expertise and context from the relevant field.'
-  },
-  { 
-    id: 'analyst', 
-    name: 'Data Analyst', 
-    model: 'kimi-k2', 
-    focus: 'Quantitative reasoning',
-    instructions: 'Focus on data, statistics, and quantitative aspects of the problem.'
-  },
-];
-
-const availableModels = [
-  { id: 'claude-opus', name: 'Claude Opus 4.5' },
-  { id: 'gpt-5.1', name: 'GPT-5.1' },
-  { id: 'gemini-pro', name: 'Gemini 3 Pro Preview' },
-  { id: 'kimi-k2', name: 'Kimi K2 Thinking' },
-  { id: 'llama-maverick', name: 'Llama 4 Maverick' },
-  { id: 'mistral-large', name: 'Mistral Large 3' },
-];
+import { useState, useEffect } from 'react';
+import { Plus, X, Loader2 } from 'lucide-react';
 
 const quickTemplates = [
   { id: 'research', label: 'Research Team', icon: '👥' },
@@ -50,7 +10,38 @@ const quickTemplates = [
 ];
 
 export function DxORoleSelector({ roles, onRolesChange }) {
-  const [editingRoles, setEditingRoles] = useState(roles || defaultRoles);
+  const [availableModels, setAvailableModels] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [editingRoles, setEditingRoles] = useState(roles);
+
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const response = await fetch('/api/config');
+        const data = await response.json();
+        setAvailableModels(data.availableModels || []);
+        
+        if (data.availableModels?.length && roles) {
+          const defaultModel = data.availableModels[0]?.id || 'gpt-5.1';
+          const updatedRoles = roles.map((role, index) => {
+            const modelExists = data.availableModels.some(m => m.id === role.model);
+            if (!modelExists) {
+              const assignedModel = data.availableModels[index % data.availableModels.length]?.id || defaultModel;
+              return { ...role, model: assignedModel };
+            }
+            return role;
+          });
+          setEditingRoles(updatedRoles);
+          onRolesChange?.(updatedRoles);
+        }
+      } catch (err) {
+        console.error('Failed to fetch config:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchConfig();
+  }, []);
 
   const updateRole = (index, field, value) => {
     const newRoles = [...editingRoles];
@@ -60,10 +51,11 @@ export function DxORoleSelector({ roles, onRolesChange }) {
   };
 
   const addRole = () => {
+    const defaultModel = availableModels[0]?.id || 'gpt-5.1';
     const newRole = {
       id: `role-${Date.now()}`,
       name: 'New Role',
-      model: 'claude-opus',
+      model: defaultModel,
       focus: 'Specific perspective',
       instructions: 'Define the role\'s specific instructions...'
     };
@@ -73,15 +65,23 @@ export function DxORoleSelector({ roles, onRolesChange }) {
   };
 
   const removeRole = (index) => {
-    if (editingRoles.length <= 2) return; // Minimum 2 roles
+    if (editingRoles.length <= 2) return;
     const newRoles = editingRoles.filter((_, i) => i !== index);
     setEditingRoles(newRoles);
     onRolesChange?.(newRoles);
   };
 
+  if (loading) {
+    return (
+      <div className="card flex items-center justify-center py-8">
+        <Loader2 className="w-6 h-6 text-deepr-accent animate-spin" />
+        <span className="ml-2 text-deepr-text-muted">Loading available models...</span>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      {/* Role Assignments */}
       <div className="card">
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -106,7 +106,6 @@ export function DxORoleSelector({ roles, onRolesChange }) {
               className="p-4 bg-deepr-bg rounded-lg border border-deepr-border"
             >
               <div className="flex items-start gap-4">
-                {/* Role Name */}
                 <div className="flex-1">
                   <label className="block text-sm text-deepr-text-muted mb-1">Role Name</label>
                   <input
@@ -117,7 +116,6 @@ export function DxORoleSelector({ roles, onRolesChange }) {
                   />
                 </div>
 
-                {/* Model Selection */}
                 <div className="flex-1">
                   <label className="block text-sm text-deepr-text-muted mb-1">Assigned Model</label>
                   <select
@@ -127,13 +125,12 @@ export function DxORoleSelector({ roles, onRolesChange }) {
                   >
                     {availableModels.map((model) => (
                       <option key={model.id} value={model.id}>
-                        {model.name}
+                        {model.name} - {model.description}
                       </option>
                     ))}
                   </select>
                 </div>
 
-                {/* Focus/Perspective */}
                 <div className="flex-1">
                   <label className="block text-sm text-deepr-text-muted mb-1">Perspective/Focus</label>
                   <input
@@ -144,7 +141,6 @@ export function DxORoleSelector({ roles, onRolesChange }) {
                   />
                 </div>
 
-                {/* Remove Button */}
                 <button
                   onClick={() => removeRole(index)}
                   className="mt-6 p-2 text-deepr-text-muted hover:text-deepr-error transition-colors"
@@ -154,7 +150,6 @@ export function DxORoleSelector({ roles, onRolesChange }) {
                 </button>
               </div>
 
-              {/* Instructions */}
               <div className="mt-3">
                 <label className="block text-sm text-deepr-text-muted mb-1">
                   Role Instructions (Optional)
@@ -171,7 +166,6 @@ export function DxORoleSelector({ roles, onRolesChange }) {
         </div>
       </div>
 
-      {/* Quick Templates */}
       <div className="card">
         <h3 className="text-sm font-semibold text-deepr-text mb-3">Quick Templates</h3>
         <div className="flex flex-wrap gap-2">
