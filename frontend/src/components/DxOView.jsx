@@ -131,7 +131,7 @@ export function DxOView() {
       {/* Header */}
       <div className="text-center space-y-4">
         <h1 className="text-4xl md:text-5xl font-bold text-gradient">
-          DxO Decision Orchestrator
+          Decision Orchestrator
         </h1>
         <p className="text-lg text-deepr-text-muted max-w-2xl mx-auto">
           Inspired by Microsoft's MAI-DxO research. Assign different AI models to 

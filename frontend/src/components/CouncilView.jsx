@@ -74,11 +74,11 @@ export function CouncilView() {
       {/* Header */}
       <div className="text-center space-y-4">
         <h1 className="text-4xl md:text-5xl font-bold text-gradient">
-          AI LLM Council
+          AI  Council
         </h1>
         <p className="text-lg text-deepr-text-muted max-w-2xl mx-auto">
           Send your prompt to multiple AI models simultaneously. Watch them deliberate, 
-          critique each other, and synthesize the best response through a Chairman model.
+          critique each other, and synthesize the best response through a Chairman model.              Inspired by Karpathy's council pattern.
         </p>
       </div>
 
