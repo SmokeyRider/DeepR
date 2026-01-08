@@ -1,6 +1,3 @@
-import { Settings, History, LogOut } from 'lucide-react';
-import { ModeToggle } from './ModeToggle';
-
 const navItems = [
   { id: 'council', label: 'Council' },
   { id: 'dxo', label: 'DxO' },
@@ -16,11 +13,10 @@ export function Header({ mode, onModeChange }) {
             <div className="w-10 h-10 bg-gradient-to-br from-deepr-accent to-deepr-info rounded-xl flex items-center justify-center">
               <span className="text-white font-bold text-lg">D</span>
             </div>
-            <span className="text-xl font-bold text-deepr-text">DeepR</span>
           </div>
 
-          {/* Navigation */}
-          <nav className="hidden md:flex items-center gap-1">
+          {/* Navigation - always visible */}
+          <nav className="flex items-center gap-1">
             {navItems.map((item) => (
               <button
                 key={item.id}
@@ -38,18 +34,8 @@ export function Header({ mode, onModeChange }) {
             ))}
           </nav>
 
-          {/* Right side */}
-          <div className="flex items-center gap-4">
-            <button className="p-2 text-deepr-text-muted hover:text-deepr-text transition-colors">
-              <History className="w-5 h-5" />
-            </button>
-            <button className="p-2 text-deepr-text-muted hover:text-deepr-text transition-colors">
-              <Settings className="w-5 h-5" />
-            </button>
-            <div className="w-8 h-8 bg-deepr-accent rounded-full flex items-center justify-center">
-              <span className="text-white text-sm font-medium">S</span>
-            </div>
-          </div>
+          {/* Spacer for layout balance */}
+          <div className="w-10" />
         </div>
       </div>
     </header>
