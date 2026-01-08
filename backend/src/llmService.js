@@ -230,7 +230,7 @@ export const processCouncilRequest = async (question, selectedMemberIds = null, 
     const response = await callLLM(prompt, member.model);
     
     try {
-      const parsed = JSON.parse(response);
+      const parsed = safeParseJSON(response);
       return {
         id: member.id,
         name: member.name,
@@ -238,14 +238,17 @@ export const processCouncilRequest = async (question, selectedMemberIds = null, 
         color: member.color,
         ...parsed
       };
-    } catch {
+    } catch (e) {
+      console.log(`[Council] JSON parse failed for ${member.name}, using fallback:`, e.message);
+      // Fallback: use the response as-is
+      const cleanedResponse = stripMarkdownCodeBlocks(response) || response;
       return {
         id: member.id,
         name: member.name,
         provider: member.provider,
         color: member.color,
-        summary: response.substring(0, 200),
-        reasoning: response,
+        summary: cleanedResponse.substring(0, 300),
+        reasoning: cleanedResponse,
         confidence: 75
       };
     }
@@ -264,13 +267,15 @@ export const processCouncilRequest = async (question, selectedMemberIds = null, 
   
   let chairman;
   try {
-    chairman = JSON.parse(chairmanResponse);
-  } catch {
+    chairman = safeParseJSON(chairmanResponse);
+  } catch (e) {
+    console.log('[Council] Chairman JSON parse failed, using fallback:', e.message);
+    const cleanedResponse = stripMarkdownCodeBlocks(chairmanResponse) || chairmanResponse;
     chairman = {
-      finalDecision: chairmanResponse,
+      finalDecision: cleanedResponse,
       consensusScore: 80,
-      agreements: [],
-      disagreements: []
+      agreements: ['See full synthesis below'],
+      disagreements: ['See full synthesis below']
     };
   }
 
