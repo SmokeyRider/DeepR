@@ -140,6 +140,28 @@ Synthesize a final decision that:
 Respond in markdown format with a clear recommendation and list of revisions made.`
 };
 
+// Helper to strip markdown code blocks from LLM responses
+const stripMarkdownCodeBlocks = (text) => {
+  if (!text) return text;
+  // Remove ```json ... ``` or ``` ... ``` blocks
+  let cleaned = text.trim();
+  if (cleaned.startsWith('```json')) {
+    cleaned = cleaned.slice(7);
+  } else if (cleaned.startsWith('```')) {
+    cleaned = cleaned.slice(3);
+  }
+  if (cleaned.endsWith('```')) {
+    cleaned = cleaned.slice(0, -3);
+  }
+  return cleaned.trim();
+};
+
+// Helper to safely parse JSON from LLM response
+const safeParseJSON = (text) => {
+  const cleaned = stripMarkdownCodeBlocks(text);
+  return JSON.parse(cleaned);
+};
+
 // Call LLM API using Replit AI Integrations
 export const callLLM = async (prompt, model = config.replitAI.defaultModel) => {
   const client = getOpenAIClient();
