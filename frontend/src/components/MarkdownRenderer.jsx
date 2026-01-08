@@ -1,6 +1,14 @@
 import ReactMarkdown from 'react-markdown';
 
 export function MarkdownRenderer({ content }) {
+  if (!content || content.trim().length === 0) {
+    return (
+      <div className="markdown-content text-deepr-text-muted italic">
+        No content available for this response.
+      </div>
+    );
+  }
+
   return (
     <div className="markdown-content">
       <ReactMarkdown

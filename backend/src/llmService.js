@@ -231,17 +231,40 @@ export const processCouncilRequest = async (question, selectedMemberIds = null, 
     
     try {
       const parsed = safeParseJSON(response);
+      // Validate parsed response has required fields
+      if (!parsed.summary && !parsed.reasoning) {
+        throw new Error('Missing required fields in response');
+      }
       return {
         id: member.id,
         name: member.name,
         provider: member.provider,
         color: member.color,
-        ...parsed
+        summary: parsed.summary || 'No summary provided',
+        reasoning: parsed.reasoning || parsed.summary || 'No detailed reasoning provided',
+        confidence: parsed.confidence || 75,
       };
     } catch (e) {
-      console.log(`[Council] JSON parse failed for ${member.name}, using fallback:`, e.message);
+      console.log(`[Council] JSON parse failed for ${member.name}:`, e.message);
+      console.log(`[Council] Raw response (first 500 chars):`, response?.substring(0, 500));
+      
       // Fallback: use the response as-is
-      const cleanedResponse = stripMarkdownCodeBlocks(response) || response;
+      const cleanedResponse = stripMarkdownCodeBlocks(response) || response || '';
+      
+      // If response is empty or very short, provide a placeholder
+      if (!cleanedResponse || cleanedResponse.trim().length < 10) {
+        console.log(`[Council] ${member.name} returned empty/invalid response`);
+        return {
+          id: member.id,
+          name: member.name,
+          provider: member.provider,
+          color: member.color,
+          summary: `${member.name} did not provide a valid response. This may be due to rate limiting or model availability.`,
+          reasoning: `The ${member.name} model was unable to generate a response for this query. Please try again or select different council members.`,
+          confidence: 50
+        };
+      }
+      
       return {
         id: member.id,
         name: member.name,
