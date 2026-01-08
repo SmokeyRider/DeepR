@@ -45,9 +45,13 @@ function App() {
           </div>
         )}
 
-        {/* Mode Views */}
-        {mode === 'council' && <CouncilView />}
-        {mode === 'dxo' && <DxOView />}
+        {/* Mode Views - both mounted to preserve state, visibility controlled via CSS */}
+        <div className={mode === 'council' ? 'block' : 'hidden'}>
+          <CouncilView />
+        </div>
+        <div className={mode === 'dxo' ? 'block' : 'hidden'}>
+          <DxOView />
+        </div>
       </main>
 
       {/* Footer */}
