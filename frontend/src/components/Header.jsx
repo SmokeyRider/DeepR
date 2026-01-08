@@ -2,7 +2,6 @@ import { Settings, History, LogOut } from 'lucide-react';
 import { ModeToggle } from './ModeToggle';
 
 const navItems = [
-  { id: 'superchat', label: 'Xiao Mei' },
   { id: 'council', label: 'Council' },
   { id: 'dxo', label: 'DxO' },
 ];
@@ -25,11 +24,7 @@ export function Header({ mode, onModeChange }) {
             {navItems.map((item) => (
               <button
                 key={item.id}
-                onClick={() => {
-                  if (item.id === 'council' || item.id === 'dxo') {
-                    onModeChange(item.id);
-                  }
-                }}
+                onClick={() => onModeChange(item.id)}
                 className={`
                   px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200
                   ${(item.id === mode) 
