@@ -13,6 +13,7 @@ export function Header({ mode, onModeChange }) {
             <div className="w-10 h-10 bg-gradient-to-br from-deepr-accent to-deepr-info rounded-xl flex items-center justify-center">
               <span className="text-white font-bold text-lg">D</span>
             </div>
+            <span className="hidden sm:inline text-xl font-bold text-deepr-text">DeepR</span>
           </div>
 
           {/* Navigation - always visible */}
