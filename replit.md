@@ -55,12 +55,22 @@ cd backend && node src/index.js & cd frontend && npm run dev
 - `GET /api/health` - Health check
 - `GET /api/config` - Configuration info (available models)
 
+## PWA Support
+The app is configured as a Progressive Web App:
+- **Installable**: Users can add to home screen on mobile/desktop
+- **Offline capable**: Service worker caches assets
+- **Auto-updates**: New versions are automatically applied
+- Icons in `/frontend/public/`: icon-192x192.svg, icon-512x512.svg, apple-touch-icon.svg
+- Configuration in `frontend/vite.config.js` using vite-plugin-pwa
+
 ## Deployment
 - Build: `npm run build --prefix frontend`
 - Production: Backend serves the API, frontend is built as static assets
 
 ## Recent Changes (January 2026)
+- Added PWA support with vite-plugin-pwa
+- Responsive header: "DeepR" title hidden on small screens
+- Removed non-functional UI elements (history, settings icons)
+- State preservation when switching between Council/DxO modes
+- Improved handling of empty LLM responses
 - Integrated Replit AI Integrations for managed LLM access
-- Updated backend to use Replit AI models
-- Modified frontend to dynamically fetch and display available models
-- Enabled live mode (USE_MOCK=false)
