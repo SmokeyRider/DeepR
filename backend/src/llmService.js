@@ -171,15 +171,24 @@ export const callLLM = async (prompt, model = config.replitAI.defaultModel) => {
   }
 
   try {
+    console.log(`[LLM] Calling model: ${model}`);
     const response = await client.chat.completions.create({
       model,
       messages: [{ role: 'user', content: prompt }],
       max_completion_tokens: 2048,
     });
 
-    return response.choices[0].message.content;
+    const content = response.choices?.[0]?.message?.content;
+    console.log(`[LLM] Response from ${model}: ${content ? content.substring(0, 100) + '...' : 'EMPTY/NULL'}`);
+    
+    if (!content) {
+      console.log(`[LLM] Full response structure:`, JSON.stringify(response, null, 2).substring(0, 500));
+    }
+
+    return content || '';
   } catch (error) {
-    console.error('LLM API Error:', error);
+    console.error('[LLM] API Error:', error.message);
+    console.error('[LLM] Full error:', error);
     throw error;
   }
 };
