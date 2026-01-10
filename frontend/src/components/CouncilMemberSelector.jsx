@@ -1,23 +1,13 @@
 import { useState, useEffect } from 'react';
-import { CheckSquare, Loader2 } from 'lucide-react';
+import { CheckSquare, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 
-const modelColors = {
-  'gpt-5.2': '#10B981',
-  'gpt-5.1': '#8B5CF6',
-  'gpt-5': '#3B82F6',
-  'gpt-5-mini': '#F59E0B',
-  'gpt-4.1': '#EF4444',
-  'gpt-4o': '#EC4899',
-  'o3': '#14B8A6',
-  'o3-mini': '#6366F1',
-};
-
-const defaultSelectedMembers = ['gpt-5.1', 'gpt-4.1', 'o3-mini'];
-const defaultChairman = 'gpt-5';
+const defaultSelectedMembers = ['gpt-5.1', 'claude-sonnet-4-5', 'gemini-2.5-flash'];
+const defaultChairman = 'gpt-5.1';
 
 export function CouncilMemberSelector({ selectedMembers, onSelectionChange, chairmanModel, onChairmanChange }) {
   const [availableModels, setAvailableModels] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [expandedProviders, setExpandedProviders] = useState({});
 
   useEffect(() => {
     const fetchConfig = async () => {
@@ -25,6 +15,9 @@ export function CouncilMemberSelector({ selectedMembers, onSelectionChange, chai
         const response = await fetch('/api/config');
         const data = await response.json();
         setAvailableModels(data.availableModels || []);
+        
+        const providers = [...new Set((data.availableModels || []).map(m => m.providerKey || m.provider))];
+        setExpandedProviders(providers.reduce((acc, p) => ({ ...acc, [p]: true }), {}));
         
         if (data.availableModels?.length && selectedMembers.length === 0) {
           onSelectionChange(defaultSelectedMembers.filter(id => 
@@ -52,6 +45,24 @@ export function CouncilMemberSelector({ selectedMembers, onSelectionChange, chai
     }
   };
 
+  const toggleProvider = (providerKey) => {
+    setExpandedProviders(prev => ({ ...prev, [providerKey]: !prev[providerKey] }));
+  };
+
+  const groupedModels = availableModels.reduce((acc, model) => {
+    const key = model.providerKey || model.provider;
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(model);
+    return acc;
+  }, {});
+
+  const providerLabels = {
+    openai: { name: 'OpenAI', icon: '🤖', color: '#10B981' },
+    anthropic: { name: 'Anthropic', icon: '🧠', color: '#EA580C' },
+    gemini: { name: 'Google Gemini', icon: '✨', color: '#4285F4' },
+    openrouter: { name: 'OpenRouter (300+ Models)', icon: '🌐', color: '#7C3AED' },
+  };
+
   if (loading) {
     return (
       <div className="card flex items-center justify-center py-8">
@@ -67,48 +78,87 @@ export function CouncilMemberSelector({ selectedMembers, onSelectionChange, chai
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-deepr-text">Council Members</h3>
           <span className="text-sm text-deepr-text-muted">
-            Select 2+ models for best results
+            {selectedMembers.length} selected | Select 2+ models for best results
           </span>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {availableModels.map((model) => {
-            const isSelected = selectedMembers.includes(model.id);
-            const color = modelColors[model.id] || '#6B7280';
+        <div className="space-y-4">
+          {Object.entries(groupedModels).map(([providerKey, models]) => {
+            const provider = providerLabels[providerKey] || { name: providerKey, icon: '🔮', color: '#6B7280' };
+            const isExpanded = expandedProviders[providerKey];
+            const selectedCount = models.filter(m => selectedMembers.includes(m.id)).length;
             
             return (
-              <button
-                key={model.id}
-                onClick={() => toggleMember(model.id)}
-                className={`
-                  relative p-4 rounded-lg border-2 text-left transition-all duration-200
-                  ${isSelected 
-                    ? 'border-deepr-accent bg-deepr-accent/10' 
-                    : 'border-deepr-border bg-deepr-card hover:border-deepr-border/80 hover:bg-deepr-hover'
-                  }
-                `}
-                style={{ borderColor: isSelected ? color : undefined }}
-              >
-                <div className="flex items-start gap-3">
-                  <div 
-                    className={`
-                      w-6 h-6 rounded border-2 flex items-center justify-center transition-colors
-                      ${isSelected 
-                        ? 'border-transparent' 
-                        : 'border-deepr-border'
-                      }
-                    `}
-                    style={{ backgroundColor: isSelected ? color : undefined }}
-                  >
-                    {isSelected && <CheckSquare className="w-4 h-4 text-white" />}
+              <div key={providerKey} className="border border-deepr-border rounded-lg overflow-hidden">
+                <button
+                  onClick={() => toggleProvider(providerKey)}
+                  className="w-full flex items-center justify-between p-3 bg-deepr-card hover:bg-deepr-hover transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{provider.icon}</span>
+                    <span className="font-medium text-deepr-text">{provider.name}</span>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-deepr-border text-deepr-text-muted">
+                      {models.length} models
+                    </span>
+                    {selectedCount > 0 && (
+                      <span 
+                        className="text-xs px-2 py-0.5 rounded-full text-white"
+                        style={{ backgroundColor: provider.color }}
+                      >
+                        {selectedCount} selected
+                      </span>
+                    )}
                   </div>
-                  <div>
-                    <div className="font-medium text-deepr-text">{model.name}</div>
-                    <div className="text-sm text-deepr-text-muted">{model.provider}</div>
-                    <div className="text-xs text-deepr-text-muted mt-1">{model.description}</div>
+                  {isExpanded ? (
+                    <ChevronUp className="w-5 h-5 text-deepr-text-muted" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-deepr-text-muted" />
+                  )}
+                </button>
+                
+                {isExpanded && (
+                  <div className="p-3 bg-deepr-bg/50 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                    {models.map((model) => {
+                      const isSelected = selectedMembers.includes(model.id);
+                      const color = model.color || '#6B7280';
+                      
+                      return (
+                        <button
+                          key={model.id}
+                          onClick={() => toggleMember(model.id)}
+                          className={`
+                            relative p-3 rounded-lg border text-left transition-all duration-200
+                            ${isSelected 
+                              ? 'border-2 bg-opacity-10' 
+                              : 'border-deepr-border bg-deepr-card hover:border-deepr-border/80 hover:bg-deepr-hover'
+                            }
+                          `}
+                          style={{ 
+                            borderColor: isSelected ? color : undefined,
+                            backgroundColor: isSelected ? `${color}15` : undefined
+                          }}
+                        >
+                          <div className="flex items-start gap-2">
+                            <div 
+                              className={`
+                                w-5 h-5 rounded flex items-center justify-center flex-shrink-0 mt-0.5
+                                ${isSelected ? '' : 'border border-deepr-border'}
+                              `}
+                              style={{ backgroundColor: isSelected ? color : undefined }}
+                            >
+                              {isSelected && <CheckSquare className="w-3 h-3 text-white" />}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="font-medium text-deepr-text text-sm truncate">{model.name}</div>
+                              <div className="text-xs text-deepr-text-muted truncate">{model.description}</div>
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
-                </div>
-              </button>
+                )}
+              </div>
             );
           })}
         </div>
@@ -125,11 +175,18 @@ export function CouncilMemberSelector({ selectedMembers, onSelectionChange, chai
           onChange={(e) => onChairmanChange(e.target.value)}
           className="input-field"
         >
-          {availableModels.map((model) => (
-            <option key={model.id} value={model.id}>
-              {model.name} - {model.description}
-            </option>
-          ))}
+          {Object.entries(groupedModels).map(([providerKey, models]) => {
+            const provider = providerLabels[providerKey] || { name: providerKey };
+            return (
+              <optgroup key={providerKey} label={`${provider.icon || ''} ${provider.name}`}>
+                {models.map((model) => (
+                  <option key={model.id} value={model.id}>
+                    {model.name} - {model.description}
+                  </option>
+                ))}
+              </optgroup>
+            );
+          })}
         </select>
       </div>
     </div>

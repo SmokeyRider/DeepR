@@ -17,8 +17,8 @@ DeepR is an AI decision-making framework demo that showcases two LLM orchestrati
 ├── backend/           # Express.js backend
 │   └── src/
 │       ├── index.js     # Express server
-│       ├── config.js    # Configuration
-│       ├── llmService.js # LLM API integration
+│       ├── config.js    # Configuration with multi-provider support
+│       ├── llmService.js # Multi-provider LLM API integration
 │       └── mockData.js  # Mock responses for demo
 └── package.json       # Root package with dev scripts
 ```
@@ -28,18 +28,40 @@ DeepR is an AI decision-making framework demo that showcases two LLM orchestrati
 - Backend runs on port 3001 (localhost)
 - API requests from frontend are proxied to backend via Vite
 
-## Environment Variables
+## Environment Variables (Auto-configured by Replit AI Integrations)
 - `USE_MOCK`: Set to "true" for demo mode with mock data, "false" for live LLM mode (currently: false)
-- `AI_INTEGRATIONS_OPENAI_API_KEY`: Auto-configured by Replit AI Integrations
-- `AI_INTEGRATIONS_OPENAI_BASE_URL`: Auto-configured by Replit AI Integrations
+- OpenAI: `AI_INTEGRATIONS_OPENAI_API_KEY`, `AI_INTEGRATIONS_OPENAI_BASE_URL`
+- Anthropic: `AI_INTEGRATIONS_ANTHROPIC_API_KEY`, `AI_INTEGRATIONS_ANTHROPIC_BASE_URL`
+- Google Gemini: `AI_INTEGRATIONS_GEMINI_API_KEY`, `AI_INTEGRATIONS_GEMINI_BASE_URL`
+- OpenRouter: `AI_INTEGRATIONS_OPENROUTER_API_KEY`, `AI_INTEGRATIONS_OPENROUTER_BASE_URL`
 - `PORT`: Backend port (default: 3001)
 
-## Live LLM Mode
-The app is configured to use **Replit AI Integrations** for live LLM access:
-- Uses managed OpenAI-compatible API (charges billed to Replit credits)
-- Available models: gpt-5.2, gpt-5.1, gpt-5, gpt-5-mini, gpt-4.1, gpt-4o, o3, o3-mini
-- Default council members: GPT-5.1 (flagship), GPT-4.1 (advanced), O3 Mini (reasoning)
-- Frontend dynamically fetches available models from `/api/config`
+## Multi-Provider LLM Support
+The app supports 4 LLM providers via **Replit AI Integrations** (no API keys required, charges billed to Replit credits):
+
+### OpenAI Models (12 models)
+- gpt-5.2, gpt-5.1, gpt-5, gpt-5-mini, gpt-5-nano
+- gpt-4.1, gpt-4.1-mini, gpt-4o, gpt-4o-mini
+- o4-mini, o3, o3-mini
+
+### Anthropic Claude Models (4 models)
+- claude-opus-4-5 (most capable)
+- claude-sonnet-4-5 (balanced)
+- claude-haiku-4-5 (fastest)
+- claude-opus-4-1
+
+### Google Gemini Models (4 models)
+- gemini-3-pro-preview, gemini-3-flash-preview
+- gemini-2.5-pro, gemini-2.5-flash
+
+### OpenRouter Models (9+ models, access to 300+)
+- meta-llama/llama-4-maverick (FREE), meta-llama/llama-4-scout (FREE)
+- meta-llama/llama-3.3-70b-instruct
+- deepseek/deepseek-chat-v3-0324, deepseek/deepseek-r1
+- qwen/qwen3-32b
+- mistralai/mistral-small-3.1-24b-instruct (FREE)
+- google/gemini-2.5-flash-preview
+- x-ai/grok-3-mini-beta
 
 ## Running the Application
 The workflow runs both frontend and backend concurrently:
@@ -53,7 +75,7 @@ cd backend && node src/index.js & cd frontend && npm run dev
 - `POST /api/council/stream` - Streaming council responses
 - `POST /api/dxo/stream` - Streaming DxO responses
 - `GET /api/health` - Health check
-- `GET /api/config` - Configuration info (available models)
+- `GET /api/config` - Configuration info (available models from all providers)
 
 ## PWA Support
 The app is configured as a Progressive Web App:
@@ -68,9 +90,11 @@ The app is configured as a Progressive Web App:
 - Production: Backend serves the API, frontend is built as static assets
 
 ## Recent Changes (January 2026)
+- **Multi-provider LLM support**: Added Anthropic, Google Gemini, and OpenRouter alongside OpenAI
+- **29 models available**: 12 OpenAI + 4 Anthropic + 4 Gemini + 9 OpenRouter
+- **Provider-grouped UI**: Frontend model selector displays models grouped by provider
+- **Default council members**: GPT-5.1 (OpenAI), Claude Sonnet 4.5 (Anthropic), Gemini 2.5 Flash (Google)
 - Added PWA support with vite-plugin-pwa
 - Responsive header: "DeepR" title hidden on small screens
-- Removed non-functional UI elements (history, settings icons)
 - State preservation when switching between Council/DxO modes
 - Improved handling of empty LLM responses
-- Integrated Replit AI Integrations for managed LLM access

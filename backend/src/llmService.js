@@ -1,20 +1,61 @@
 import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenAI } from '@google/genai';
 import { config } from './config.js';
 
 let openaiClient = null;
+let anthropicClient = null;
+let geminiClient = null;
+let openrouterClient = null;
 
-// Initialize OpenAI client with Replit AI Integrations
 const getOpenAIClient = () => {
-  if (!openaiClient && config.replitAI.apiKey && config.replitAI.baseURL) {
+  if (!openaiClient && config.providers.openai.apiKey && config.providers.openai.baseURL) {
     openaiClient = new OpenAI({
-      apiKey: config.replitAI.apiKey,
-      baseURL: config.replitAI.baseURL,
+      apiKey: config.providers.openai.apiKey,
+      baseURL: config.providers.openai.baseURL,
     });
   }
   return openaiClient;
 };
 
-// Council member prompts
+const getAnthropicClient = () => {
+  if (!anthropicClient && config.providers.anthropic.apiKey && config.providers.anthropic.baseURL) {
+    anthropicClient = new Anthropic({
+      apiKey: config.providers.anthropic.apiKey,
+      baseURL: config.providers.anthropic.baseURL,
+    });
+  }
+  return anthropicClient;
+};
+
+const getGeminiClient = () => {
+  if (!geminiClient && config.providers.gemini.apiKey && config.providers.gemini.baseURL) {
+    geminiClient = new GoogleGenAI({
+      apiKey: config.providers.gemini.apiKey,
+      httpOptions: {
+        apiVersion: '',
+        baseUrl: config.providers.gemini.baseURL,
+      },
+    });
+  }
+  return geminiClient;
+};
+
+const getOpenRouterClient = () => {
+  if (!openrouterClient && config.providers.openrouter.apiKey && config.providers.openrouter.baseURL) {
+    openrouterClient = new OpenAI({
+      apiKey: config.providers.openrouter.apiKey,
+      baseURL: config.providers.openrouter.baseURL,
+    });
+  }
+  return openrouterClient;
+};
+
+const getProviderForModel = (modelId) => {
+  const model = config.availableModels.find(m => m.id === modelId);
+  return model?.providerKey || 'openai';
+};
+
 const getCouncilMemberPrompt = (question, memberConfig) => {
   return `You are ${memberConfig.name}, an expert AI council member from ${memberConfig.provider}. 
 Your role is to provide a thoughtful, well-reasoned answer to the question below.
@@ -62,7 +103,6 @@ Respond in this JSON format:
 }`;
 };
 
-// DxO role prompts
 const getDxOPrompts = {
   lead: (question) => `You are the Lead Researcher in a decision-making team.
 Your role is to provide an initial analysis and recommendation for the problem.
@@ -140,10 +180,8 @@ Synthesize a final decision that:
 Respond in markdown format with a clear recommendation and list of revisions made.`
 };
 
-// Helper to strip markdown code blocks from LLM responses
 const stripMarkdownCodeBlocks = (text) => {
   if (!text) return text;
-  // Remove ```json ... ``` or ``` ... ``` blocks
   let cleaned = text.trim();
   if (cleaned.startsWith('```json')) {
     cleaned = cleaned.slice(7);
@@ -156,63 +194,103 @@ const stripMarkdownCodeBlocks = (text) => {
   return cleaned.trim();
 };
 
-// Helper to safely parse JSON from LLM response
 const safeParseJSON = (text) => {
   const cleaned = stripMarkdownCodeBlocks(text);
   return JSON.parse(cleaned);
 };
 
-// Call LLM API using Replit AI Integrations
-export const callLLM = async (prompt, model = config.replitAI.defaultModel) => {
+const callOpenAI = async (prompt, model) => {
   const client = getOpenAIClient();
-  
   if (!client) {
-    throw new Error('Replit AI client not configured. Check AI_INTEGRATIONS_OPENAI_API_KEY and AI_INTEGRATIONS_OPENAI_BASE_URL.');
+    throw new Error('OpenAI client not configured');
   }
+  const response = await client.chat.completions.create({
+    model,
+    messages: [{ role: 'user', content: prompt }],
+    max_completion_tokens: 2048,
+  });
+  return response.choices?.[0]?.message?.content || '';
+};
+
+const callAnthropic = async (prompt, model) => {
+  const client = getAnthropicClient();
+  if (!client) {
+    throw new Error('Anthropic client not configured');
+  }
+  const message = await client.messages.create({
+    model,
+    max_tokens: 2048,
+    messages: [{ role: 'user', content: prompt }],
+  });
+  const content = message.content[0];
+  return content.type === 'text' ? content.text : '';
+};
+
+const callGemini = async (prompt, model) => {
+  const client = getGeminiClient();
+  if (!client) {
+    throw new Error('Gemini client not configured');
+  }
+  const response = await client.models.generateContent({
+    model,
+    contents: prompt,
+  });
+  return response.text || '';
+};
+
+const callOpenRouter = async (prompt, model) => {
+  const client = getOpenRouterClient();
+  if (!client) {
+    throw new Error('OpenRouter client not configured');
+  }
+  const response = await client.chat.completions.create({
+    model,
+    messages: [{ role: 'user', content: prompt }],
+    max_tokens: 2048,
+  });
+  return response.choices?.[0]?.message?.content || '';
+};
+
+export const callLLM = async (prompt, model = config.defaultModel) => {
+  const provider = getProviderForModel(model);
+  console.log(`[LLM] Calling model: ${model} (provider: ${provider})`);
 
   try {
-    console.log(`[LLM] Calling model: ${model}`);
-    const response = await client.chat.completions.create({
-      model,
-      messages: [{ role: 'user', content: prompt }],
-      max_completion_tokens: 2048,
-    });
-
-    const content = response.choices?.[0]?.message?.content;
-    console.log(`[LLM] Response from ${model}: ${content ? content.substring(0, 100) + '...' : 'EMPTY/NULL'}`);
-    
-    if (!content) {
-      console.log(`[LLM] Full response structure:`, JSON.stringify(response, null, 2).substring(0, 500));
+    let content;
+    switch (provider) {
+      case 'anthropic':
+        content = await callAnthropic(prompt, model);
+        break;
+      case 'gemini':
+        content = await callGemini(prompt, model);
+        break;
+      case 'openrouter':
+        content = await callOpenRouter(prompt, model);
+        break;
+      case 'openai':
+      default:
+        content = await callOpenAI(prompt, model);
+        break;
     }
 
+    console.log(`[LLM] Response from ${model}: ${content ? content.substring(0, 100) + '...' : 'EMPTY/NULL'}`);
     return content || '';
   } catch (error) {
-    console.error('[LLM] API Error:', error.message);
-    console.error('[LLM] Full error:', error);
+    console.error(`[LLM] API Error for ${model}:`, error.message);
     throw error;
   }
 };
 
-// Model colors for display
-const modelColors = {
-  'gpt-5.2': '#10B981',
-  'gpt-5.1': '#8B5CF6',
-  'gpt-5': '#3B82F6',
-  'gpt-5-mini': '#F59E0B',
-  'gpt-4.1': '#EF4444',
-  'gpt-4o': '#EC4899',
-  'o3': '#14B8A6',
-  'o3-mini': '#6366F1',
-};
+const modelColors = config.availableModels.reduce((acc, m) => {
+  acc[m.id] = m.color;
+  return acc;
+}, {});
 
-// Process council request with selected members
 export const processCouncilRequest = async (question, selectedMemberIds = null, chairmanModelId = null) => {
-  // Build member list from selected IDs, falling back to defaults
   const memberIds = selectedMemberIds?.length 
     ? selectedMemberIds 
     : config.councilMembers.map(m => m.id);
   
-  // Map selected IDs to member configs from available models
   const members = memberIds.map(id => {
     const available = config.availableModels.find(m => m.id === id);
     if (available) {
@@ -221,7 +299,7 @@ export const processCouncilRequest = async (question, selectedMemberIds = null, 
         name: available.name,
         model: available.id,
         provider: available.provider,
-        color: modelColors[available.id] || '#6B7280'
+        color: available.color || '#6B7280'
       };
     }
     return null;
@@ -231,16 +309,12 @@ export const processCouncilRequest = async (question, selectedMemberIds = null, 
     throw new Error('No valid council members selected');
   }
 
-  const memberResponses = [];
-
-  // Get responses from all selected council members in parallel
   const memberPromises = members.map(async (member) => {
     const prompt = getCouncilMemberPrompt(question, member);
     const response = await callLLM(prompt, member.model);
     
     try {
       const parsed = safeParseJSON(response);
-      // Validate parsed response has required fields
       if (!parsed.summary && !parsed.reasoning) {
         throw new Error('Missing required fields in response');
       }
@@ -255,21 +329,16 @@ export const processCouncilRequest = async (question, selectedMemberIds = null, 
       };
     } catch (e) {
       console.log(`[Council] JSON parse failed for ${member.name}:`, e.message);
-      console.log(`[Council] Raw response (first 500 chars):`, response?.substring(0, 500));
-      
-      // Fallback: use the response as-is
       const cleanedResponse = stripMarkdownCodeBlocks(response) || response || '';
       
-      // If response is empty or very short, provide a placeholder
       if (!cleanedResponse || cleanedResponse.trim().length < 10) {
-        console.log(`[Council] ${member.name} returned empty/invalid response`);
         return {
           id: member.id,
           name: member.name,
           provider: member.provider,
           color: member.color,
-          summary: `${member.name} did not provide a valid response. This may be due to rate limiting or model availability.`,
-          reasoning: `The ${member.name} model was unable to generate a response for this query. Please try again or select different council members.`,
+          summary: `${member.name} did not provide a valid response.`,
+          reasoning: `The ${member.name} model was unable to generate a response. Please try again.`,
           confidence: 50
         };
       }
@@ -286,14 +355,11 @@ export const processCouncilRequest = async (question, selectedMemberIds = null, 
     }
   });
 
-  const responses = await Promise.all(memberPromises);
-  memberResponses.push(...responses);
+  const memberResponses = await Promise.all(memberPromises);
 
-  // Use specified chairman model or fall back to default
-  const chairmanModel = chairmanModelId || config.replitAI.chairmanModel;
+  const chairmanModel = chairmanModelId || config.chairmanModel;
   const chairmanInfo = config.availableModels.find(m => m.id === chairmanModel);
 
-  // Get chairman synthesis
   const chairmanPrompt = getChairmanPrompt(question, memberResponses);
   const chairmanResponse = await callLLM(chairmanPrompt, chairmanModel);
   
@@ -301,7 +367,6 @@ export const processCouncilRequest = async (question, selectedMemberIds = null, 
   try {
     chairman = safeParseJSON(chairmanResponse);
   } catch (e) {
-    console.log('[Council] Chairman JSON parse failed, using fallback:', e.message);
     const cleanedResponse = stripMarkdownCodeBlocks(chairmanResponse) || chairmanResponse;
     chairman = {
       finalDecision: cleanedResponse,
@@ -321,25 +386,19 @@ export const processCouncilRequest = async (question, selectedMemberIds = null, 
   };
 };
 
-// Process DxO request
 export const processDxORequest = async (question) => {
-  // Step 1: Lead Researcher
   const leadPrompt = getDxOPrompts.lead(question);
   const leadContent = await callLLM(leadPrompt);
 
-  // Step 2: Critical Reviewer
   const reviewerPrompt = getDxOPrompts.reviewer(question, leadContent);
   const reviewerContent = await callLLM(reviewerPrompt);
 
-  // Step 3: Domain Expert
   const expertPrompt = getDxOPrompts.expert(question, `Lead's Analysis:\n${leadContent}\n\nReviewer's Critique:\n${reviewerContent}`);
   const expertContent = await callLLM(expertPrompt);
 
-  // Step 4: Data Analyst
   const analystPrompt = getDxOPrompts.analyst(question, `Lead's Analysis:\n${leadContent}\n\nReviewer's Critique:\n${reviewerContent}\n\nExpert Input:\n${expertContent}`);
   const analystContent = await callLLM(analystPrompt);
 
-  // Step 5: Final Decision
   const finalPrompt = getDxOPrompts.final(question, 
     `Lead's Analysis:\n${leadContent}\n\nReviewer's Critique:\n${reviewerContent}\n\nExpert Input:\n${expertContent}\n\nAnalyst's Data:\n${analystContent}`
   );
@@ -385,13 +444,11 @@ export const processDxORequest = async (question) => {
   };
 };
 
-// Process DxO request with streaming (sends each role as it completes)
 export const processDxORequestStreaming = async (question, onRoleComplete) => {
   console.log('[DxO] Step 1: Lead Researcher starting...');
-  // Step 1: Lead Researcher
   const leadPrompt = getDxOPrompts.lead(question);
   const leadContent = await callLLM(leadPrompt);
-  console.log('[DxO] Step 1: Lead Researcher complete, sending response...');
+  console.log('[DxO] Step 1: Lead Researcher complete');
   onRoleComplete('leadResearcher', {
     role: 'Lead Researcher',
     icon: '🔬',
@@ -401,10 +458,9 @@ export const processDxORequestStreaming = async (question, onRoleComplete) => {
   });
 
   console.log('[DxO] Step 2: Critical Reviewer starting...');
-  // Step 2: Critical Reviewer
   const reviewerPrompt = getDxOPrompts.reviewer(question, leadContent);
   const reviewerContent = await callLLM(reviewerPrompt);
-  console.log('[DxO] Step 2: Critical Reviewer complete, sending response...');
+  console.log('[DxO] Step 2: Critical Reviewer complete');
   onRoleComplete('criticalReviewer', {
     role: 'Critical Reviewer',
     icon: '🔍',
@@ -414,10 +470,9 @@ export const processDxORequestStreaming = async (question, onRoleComplete) => {
   });
 
   console.log('[DxO] Step 3: Domain Expert starting...');
-  // Step 3: Domain Expert
   const expertPrompt = getDxOPrompts.expert(question, `Lead's Analysis:\n${leadContent}\n\nReviewer's Critique:\n${reviewerContent}`);
   const expertContent = await callLLM(expertPrompt);
-  console.log('[DxO] Step 3: Domain Expert complete, sending response...');
+  console.log('[DxO] Step 3: Domain Expert complete');
   onRoleComplete('domainExpert', {
     role: 'Domain Expert',
     icon: '📚',
@@ -427,10 +482,9 @@ export const processDxORequestStreaming = async (question, onRoleComplete) => {
   });
 
   console.log('[DxO] Step 4: Data Analyst starting...');
-  // Step 4: Data Analyst
   const analystPrompt = getDxOPrompts.analyst(question, `Lead's Analysis:\n${leadContent}\n\nReviewer's Critique:\n${reviewerContent}\n\nExpert Input:\n${expertContent}`);
   const analystContent = await callLLM(analystPrompt);
-  console.log('[DxO] Step 4: Data Analyst complete, sending response...');
+  console.log('[DxO] Step 4: Data Analyst complete');
   onRoleComplete('dataAnalyst', {
     role: 'Data Analyst',
     icon: '📊',
@@ -440,12 +494,11 @@ export const processDxORequestStreaming = async (question, onRoleComplete) => {
   });
 
   console.log('[DxO] Step 5: Final Decision starting...');
-  // Step 5: Final Decision
   const finalPrompt = getDxOPrompts.final(question, 
     `Lead's Analysis:\n${leadContent}\n\nReviewer's Critique:\n${reviewerContent}\n\nExpert Input:\n${expertContent}\n\nAnalyst's Data:\n${analystContent}`
   );
   const finalContent = await callLLM(finalPrompt);
-  console.log('[DxO] Step 5: Final Decision complete, sending response...');
+  console.log('[DxO] Step 5: Final Decision complete');
   onRoleComplete('finalDecision', {
     role: 'Final Decision',
     icon: '✨',
