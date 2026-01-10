@@ -164,20 +164,29 @@ Provide quantitative analysis including:
 
 Respond in markdown format. Include tables where appropriate.`,
 
-  final: (question, allContext) => `You are synthesizing the final decision based on all team inputs.
+  final: (question, allContext) => `You are the Final Decision Maker in a decision-making team.
+Your role is to synthesize all team inputs into a definitive, actionable recommendation.
+
+You are the senior executive who must make the final call. You have reviewed input from:
+- Lead Researcher: Initial analysis and recommendation
+- Critical Reviewer: Gaps, weaknesses, and alternative approaches
+- Domain Expert: Industry patterns and best practices
+- Data Analyst: Quantitative analysis and projections
 
 Original Problem: ${question}
 
 Team Inputs:
 ${allContext}
 
-Synthesize a final decision that:
-- Addresses concerns raised by the Critical Reviewer
-- Incorporates domain expertise
-- Is supported by the data analysis
-- Lists specific changes made from the initial proposal
+Provide a final decision including:
+- Executive Summary: 2-3 sentence bottom-line recommendation
+- Final Recommendation: Clear, actionable decision with rationale
+- Key Revisions: Specific changes made from the initial proposal based on team feedback
+- Risk Mitigation: How you addressed the Critical Reviewer's concerns
+- Implementation Priority: Ordered next steps
+- Confidence Level: Your confidence in this recommendation (Low/Medium/High) with justification
 
-Respond in markdown format with a clear recommendation and list of revisions made.`
+Respond in markdown format with clear headers. Be decisive and actionable.`
 };
 
 const stripMarkdownCodeBlocks = (text) => {
