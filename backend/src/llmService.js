@@ -199,19 +199,19 @@ const safeParseJSON = (text) => {
   return JSON.parse(cleaned);
 };
 
-const callOpenAI = async (prompt, model, context = '') => {
+const callOpenAI = async (prompt, model, context = '', maxTokens = 8192) => {
   const client = getOpenAIClient();
   if (!client) {
     throw new Error('OpenAI client not configured - check AI_INTEGRATIONS_OPENAI_API_KEY');
   }
-  console.log(`[OpenAI${context}] Sending request to model: ${model}, prompt length: ${prompt.length} chars`);
+  console.log(`[OpenAI${context}] Sending request to model: ${model}, prompt length: ${prompt.length} chars, max_tokens: ${maxTokens}`);
   const startTime = Date.now();
   
   try {
     const response = await client.chat.completions.create({
       model,
       messages: [{ role: 'user', content: prompt }],
-      max_completion_tokens: 4096,
+      max_completion_tokens: maxTokens,
     });
     
     const elapsed = Date.now() - startTime;
@@ -231,18 +231,18 @@ const callOpenAI = async (prompt, model, context = '') => {
   }
 };
 
-const callAnthropic = async (prompt, model, context = '') => {
+const callAnthropic = async (prompt, model, context = '', maxTokens = 8192) => {
   const client = getAnthropicClient();
   if (!client) {
     throw new Error('Anthropic client not configured - check AI_INTEGRATIONS_ANTHROPIC_API_KEY');
   }
-  console.log(`[Anthropic${context}] Sending request to model: ${model}, prompt length: ${prompt.length} chars`);
+  console.log(`[Anthropic${context}] Sending request to model: ${model}, prompt length: ${prompt.length} chars, max_tokens: ${maxTokens}`);
   const startTime = Date.now();
   
   try {
     const message = await client.messages.create({
       model,
-      max_tokens: 4096,
+      max_tokens: maxTokens,
       messages: [{ role: 'user', content: prompt }],
     });
     
@@ -293,19 +293,19 @@ const callGemini = async (prompt, model, context = '') => {
   }
 };
 
-const callOpenRouter = async (prompt, model, context = '') => {
+const callOpenRouter = async (prompt, model, context = '', maxTokens = 8192) => {
   const client = getOpenRouterClient();
   if (!client) {
     throw new Error('OpenRouter client not configured - check AI_INTEGRATIONS_OPENROUTER_API_KEY');
   }
-  console.log(`[OpenRouter${context}] Sending request to model: ${model}, prompt length: ${prompt.length} chars`);
+  console.log(`[OpenRouter${context}] Sending request to model: ${model}, prompt length: ${prompt.length} chars, max_tokens: ${maxTokens}`);
   const startTime = Date.now();
   
   try {
     const response = await client.chat.completions.create({
       model,
       messages: [{ role: 'user', content: prompt }],
-      max_tokens: 4096,
+      max_tokens: maxTokens,
     });
     
     const elapsed = Date.now() - startTime;
@@ -326,11 +326,11 @@ const callOpenRouter = async (prompt, model, context = '') => {
 };
 
 export const callLLM = async (prompt, model = config.defaultModel, options = {}) => {
-  const { context = '', maxRetries = 0 } = options;
+  const { context = '', maxRetries = 0, maxTokens = 8192 } = options;
   const provider = getProviderForModel(model);
   const contextLabel = context ? `:${context}` : '';
   
-  console.log(`[LLM${contextLabel}] Calling model: ${model} (provider: ${provider})`);
+  console.log(`[LLM${contextLabel}] Calling model: ${model} (provider: ${provider}), maxTokens: ${maxTokens}`);
 
   const attemptCall = async (attempt) => {
     const attemptLabel = maxRetries > 0 ? ` (attempt ${attempt + 1}/${maxRetries + 1})` : '';
@@ -339,17 +339,17 @@ export const callLLM = async (prompt, model = config.defaultModel, options = {})
       let content;
       switch (provider) {
         case 'anthropic':
-          content = await callAnthropic(prompt, model, contextLabel + attemptLabel);
+          content = await callAnthropic(prompt, model, contextLabel + attemptLabel, maxTokens);
           break;
         case 'gemini':
           content = await callGemini(prompt, model, contextLabel + attemptLabel);
           break;
         case 'openrouter':
-          content = await callOpenRouter(prompt, model, contextLabel + attemptLabel);
+          content = await callOpenRouter(prompt, model, contextLabel + attemptLabel, maxTokens);
           break;
         case 'openai':
         default:
-          content = await callOpenAI(prompt, model, contextLabel + attemptLabel);
+          content = await callOpenAI(prompt, model, contextLabel + attemptLabel, maxTokens);
           break;
       }
 
@@ -489,15 +489,19 @@ export const processCouncilRequest = async (question, selectedMemberIds = null, 
 };
 
 const callDxORole = async (roleName, prompt, model = config.defaultModel) => {
-  console.log(`[DxO:${roleName}] Starting with model: ${model}`);
+  console.log(`[DxO:${roleName}] Starting with model: ${model}, prompt length: ${prompt.length} chars`);
   
   try {
-    const content = await callLLM(prompt, model, { context: `DxO:${roleName}`, maxRetries: 1 });
+    const content = await callLLM(prompt, model, { 
+      context: `DxO:${roleName}`, 
+      maxRetries: 1,
+      maxTokens: 16384
+    });
     console.log(`[DxO:${roleName}] Success, content length: ${content.length} chars`);
     return content;
   } catch (error) {
-    const diagnostic = `[DxO:${roleName}] FAILED after retry. Model: ${model}. Error: ${error.message}. ` +
-      `This may indicate: (1) API rate limiting, (2) model unavailable, (3) prompt too long, or (4) network issues.`;
+    const diagnostic = `[DxO:${roleName}] FAILED after retry. Model: ${model}. Prompt: ${prompt.length} chars. Error: ${error.message}. ` +
+      `Possible causes: (1) Token limit exhausted on reasoning, (2) API rate limiting, (3) model unavailable, (4) prompt too long.`;
     console.error(diagnostic);
     
     const failureError = new Error(`${roleName} failed: ${error.message}`);
