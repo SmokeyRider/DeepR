@@ -17,7 +17,7 @@
     "@anthropic-ai/sdk": "^0.71.2",
     "@google/genai": "^1.35.0",
     "drizzle-zod": "^0.8.3",
-    "openai": "^6.15.0",
+    "openai": "^6.16.0",
     "p-limit": "^7.2.0",
     "p-retry": "^7.1.1",
     "vite-plugin-pwa": "^1.2.0",
