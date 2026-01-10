@@ -199,86 +199,188 @@ const safeParseJSON = (text) => {
   return JSON.parse(cleaned);
 };
 
-const callOpenAI = async (prompt, model) => {
+const callOpenAI = async (prompt, model, context = '') => {
   const client = getOpenAIClient();
   if (!client) {
-    throw new Error('OpenAI client not configured');
+    throw new Error('OpenAI client not configured - check AI_INTEGRATIONS_OPENAI_API_KEY');
   }
-  const response = await client.chat.completions.create({
-    model,
-    messages: [{ role: 'user', content: prompt }],
-    max_completion_tokens: 2048,
-  });
-  return response.choices?.[0]?.message?.content || '';
-};
-
-const callAnthropic = async (prompt, model) => {
-  const client = getAnthropicClient();
-  if (!client) {
-    throw new Error('Anthropic client not configured');
-  }
-  const message = await client.messages.create({
-    model,
-    max_tokens: 2048,
-    messages: [{ role: 'user', content: prompt }],
-  });
-  const content = message.content[0];
-  return content.type === 'text' ? content.text : '';
-};
-
-const callGemini = async (prompt, model) => {
-  const client = getGeminiClient();
-  if (!client) {
-    throw new Error('Gemini client not configured');
-  }
-  const response = await client.models.generateContent({
-    model,
-    contents: prompt,
-  });
-  return response.text || '';
-};
-
-const callOpenRouter = async (prompt, model) => {
-  const client = getOpenRouterClient();
-  if (!client) {
-    throw new Error('OpenRouter client not configured');
-  }
-  const response = await client.chat.completions.create({
-    model,
-    messages: [{ role: 'user', content: prompt }],
-    max_tokens: 2048,
-  });
-  return response.choices?.[0]?.message?.content || '';
-};
-
-export const callLLM = async (prompt, model = config.defaultModel) => {
-  const provider = getProviderForModel(model);
-  console.log(`[LLM] Calling model: ${model} (provider: ${provider})`);
-
+  console.log(`[OpenAI${context}] Sending request to model: ${model}, prompt length: ${prompt.length} chars`);
+  const startTime = Date.now();
+  
   try {
-    let content;
-    switch (provider) {
-      case 'anthropic':
-        content = await callAnthropic(prompt, model);
-        break;
-      case 'gemini':
-        content = await callGemini(prompt, model);
-        break;
-      case 'openrouter':
-        content = await callOpenRouter(prompt, model);
-        break;
-      case 'openai':
-      default:
-        content = await callOpenAI(prompt, model);
-        break;
+    const response = await client.chat.completions.create({
+      model,
+      messages: [{ role: 'user', content: prompt }],
+      max_completion_tokens: 4096,
+    });
+    
+    const elapsed = Date.now() - startTime;
+    const content = response.choices?.[0]?.message?.content || '';
+    const finishReason = response.choices?.[0]?.finish_reason || 'unknown';
+    
+    console.log(`[OpenAI${context}] Response received in ${elapsed}ms, finish_reason: ${finishReason}, content length: ${content.length} chars`);
+    
+    if (!content) {
+      console.warn(`[OpenAI${context}] WARNING: Empty content received. Full response:`, JSON.stringify(response, null, 2));
     }
-
-    console.log(`[LLM] Response from ${model}: ${content ? content.substring(0, 100) + '...' : 'EMPTY/NULL'}`);
-    return content || '';
+    
+    return content;
   } catch (error) {
-    console.error(`[LLM] API Error for ${model}:`, error.message);
+    console.error(`[OpenAI${context}] API Error:`, error.message, error.status || '', error.code || '');
     throw error;
   }
+};
+
+const callAnthropic = async (prompt, model, context = '') => {
+  const client = getAnthropicClient();
+  if (!client) {
+    throw new Error('Anthropic client not configured - check AI_INTEGRATIONS_ANTHROPIC_API_KEY');
+  }
+  console.log(`[Anthropic${context}] Sending request to model: ${model}, prompt length: ${prompt.length} chars`);
+  const startTime = Date.now();
+  
+  try {
+    const message = await client.messages.create({
+      model,
+      max_tokens: 4096,
+      messages: [{ role: 'user', content: prompt }],
+    });
+    
+    const elapsed = Date.now() - startTime;
+    const content = message.content[0];
+    const text = content?.type === 'text' ? content.text : '';
+    
+    console.log(`[Anthropic${context}] Response received in ${elapsed}ms, stop_reason: ${message.stop_reason}, content length: ${text.length} chars`);
+    
+    if (!text) {
+      console.warn(`[Anthropic${context}] WARNING: Empty content received. Full response:`, JSON.stringify(message, null, 2));
+    }
+    
+    return text;
+  } catch (error) {
+    console.error(`[Anthropic${context}] API Error:`, error.message, error.status || '', error.code || '');
+    throw error;
+  }
+};
+
+const callGemini = async (prompt, model, context = '') => {
+  const client = getGeminiClient();
+  if (!client) {
+    throw new Error('Gemini client not configured - check AI_INTEGRATIONS_GEMINI_API_KEY');
+  }
+  console.log(`[Gemini${context}] Sending request to model: ${model}, prompt length: ${prompt.length} chars`);
+  const startTime = Date.now();
+  
+  try {
+    const response = await client.models.generateContent({
+      model,
+      contents: prompt,
+    });
+    
+    const elapsed = Date.now() - startTime;
+    const text = response.text || '';
+    
+    console.log(`[Gemini${context}] Response received in ${elapsed}ms, content length: ${text.length} chars`);
+    
+    if (!text) {
+      console.warn(`[Gemini${context}] WARNING: Empty content received. Full response:`, JSON.stringify(response, null, 2));
+    }
+    
+    return text;
+  } catch (error) {
+    console.error(`[Gemini${context}] API Error:`, error.message, error.status || '', error.code || '');
+    throw error;
+  }
+};
+
+const callOpenRouter = async (prompt, model, context = '') => {
+  const client = getOpenRouterClient();
+  if (!client) {
+    throw new Error('OpenRouter client not configured - check AI_INTEGRATIONS_OPENROUTER_API_KEY');
+  }
+  console.log(`[OpenRouter${context}] Sending request to model: ${model}, prompt length: ${prompt.length} chars`);
+  const startTime = Date.now();
+  
+  try {
+    const response = await client.chat.completions.create({
+      model,
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 4096,
+    });
+    
+    const elapsed = Date.now() - startTime;
+    const content = response.choices?.[0]?.message?.content || '';
+    const finishReason = response.choices?.[0]?.finish_reason || 'unknown';
+    
+    console.log(`[OpenRouter${context}] Response received in ${elapsed}ms, finish_reason: ${finishReason}, content length: ${content.length} chars`);
+    
+    if (!content) {
+      console.warn(`[OpenRouter${context}] WARNING: Empty content received. Full response:`, JSON.stringify(response, null, 2));
+    }
+    
+    return content;
+  } catch (error) {
+    console.error(`[OpenRouter${context}] API Error:`, error.message, error.status || '', error.code || '');
+    throw error;
+  }
+};
+
+export const callLLM = async (prompt, model = config.defaultModel, options = {}) => {
+  const { context = '', maxRetries = 0 } = options;
+  const provider = getProviderForModel(model);
+  const contextLabel = context ? `:${context}` : '';
+  
+  console.log(`[LLM${contextLabel}] Calling model: ${model} (provider: ${provider})`);
+
+  const attemptCall = async (attempt) => {
+    const attemptLabel = maxRetries > 0 ? ` (attempt ${attempt + 1}/${maxRetries + 1})` : '';
+    
+    try {
+      let content;
+      switch (provider) {
+        case 'anthropic':
+          content = await callAnthropic(prompt, model, contextLabel + attemptLabel);
+          break;
+        case 'gemini':
+          content = await callGemini(prompt, model, contextLabel + attemptLabel);
+          break;
+        case 'openrouter':
+          content = await callOpenRouter(prompt, model, contextLabel + attemptLabel);
+          break;
+        case 'openai':
+        default:
+          content = await callOpenAI(prompt, model, contextLabel + attemptLabel);
+          break;
+      }
+
+      if (!content || content.trim().length === 0) {
+        const error = new Error(`Empty response from ${model}`);
+        error.isEmptyResponse = true;
+        throw error;
+      }
+
+      console.log(`[LLM${contextLabel}] Success from ${model}: ${content.substring(0, 80)}...`);
+      return content;
+    } catch (error) {
+      console.error(`[LLM${contextLabel}] Error from ${model}${attemptLabel}:`, error.message);
+      throw error;
+    }
+  };
+
+  let lastError;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await attemptCall(attempt);
+    } catch (error) {
+      lastError = error;
+      if (attempt < maxRetries) {
+        console.log(`[LLM${contextLabel}] Retrying ${model} after error: ${error.message}`);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+  }
+
+  throw lastError;
 };
 
 const modelColors = config.availableModels.reduce((acc, m) => {
@@ -386,23 +488,43 @@ export const processCouncilRequest = async (question, selectedMemberIds = null, 
   };
 };
 
+const callDxORole = async (roleName, prompt, model = config.defaultModel) => {
+  console.log(`[DxO:${roleName}] Starting with model: ${model}`);
+  
+  try {
+    const content = await callLLM(prompt, model, { context: `DxO:${roleName}`, maxRetries: 1 });
+    console.log(`[DxO:${roleName}] Success, content length: ${content.length} chars`);
+    return content;
+  } catch (error) {
+    const diagnostic = `[DxO:${roleName}] FAILED after retry. Model: ${model}. Error: ${error.message}. ` +
+      `This may indicate: (1) API rate limiting, (2) model unavailable, (3) prompt too long, or (4) network issues.`;
+    console.error(diagnostic);
+    
+    const failureError = new Error(`${roleName} failed: ${error.message}`);
+    failureError.role = roleName;
+    failureError.diagnostic = diagnostic;
+    failureError.isRoleFailure = true;
+    throw failureError;
+  }
+};
+
 export const processDxORequest = async (question) => {
   const leadPrompt = getDxOPrompts.lead(question);
-  const leadContent = await callLLM(leadPrompt);
+  const leadContent = await callDxORole('Lead Researcher', leadPrompt);
 
   const reviewerPrompt = getDxOPrompts.reviewer(question, leadContent);
-  const reviewerContent = await callLLM(reviewerPrompt);
+  const reviewerContent = await callDxORole('Critical Reviewer', reviewerPrompt);
 
   const expertPrompt = getDxOPrompts.expert(question, `Lead's Analysis:\n${leadContent}\n\nReviewer's Critique:\n${reviewerContent}`);
-  const expertContent = await callLLM(expertPrompt);
+  const expertContent = await callDxORole('Domain Expert', expertPrompt);
 
   const analystPrompt = getDxOPrompts.analyst(question, `Lead's Analysis:\n${leadContent}\n\nReviewer's Critique:\n${reviewerContent}\n\nExpert Input:\n${expertContent}`);
-  const analystContent = await callLLM(analystPrompt);
+  const analystContent = await callDxORole('Data Analyst', analystPrompt);
 
   const finalPrompt = getDxOPrompts.final(question, 
     `Lead's Analysis:\n${leadContent}\n\nReviewer's Critique:\n${reviewerContent}\n\nExpert Input:\n${expertContent}\n\nAnalyst's Data:\n${analystContent}`
   );
-  const finalContent = await callLLM(finalPrompt);
+  const finalContent = await callDxORole('Final Decision', finalPrompt);
 
   return {
     leadResearcher: {
@@ -444,67 +566,78 @@ export const processDxORequest = async (question) => {
   };
 };
 
-export const processDxORequestStreaming = async (question, onRoleComplete) => {
-  console.log('[DxO] Step 1: Lead Researcher starting...');
-  const leadPrompt = getDxOPrompts.lead(question);
-  const leadContent = await callLLM(leadPrompt);
-  console.log('[DxO] Step 1: Lead Researcher complete');
-  onRoleComplete('leadResearcher', {
-    role: 'Lead Researcher',
-    icon: '🔬',
-    focus: 'Primary analysis and synthesis',
-    content: leadContent,
-    color: '#8B5CF6'
-  });
+export const processDxORequestStreaming = async (question, onRoleComplete, onError) => {
+  console.log('[DxO Stream] Starting sequential role processing...');
+  
+  try {
+    console.log('[DxO Stream] Step 1/5: Lead Researcher');
+    const leadPrompt = getDxOPrompts.lead(question);
+    const leadContent = await callDxORole('Lead Researcher', leadPrompt);
+    onRoleComplete('leadResearcher', {
+      role: 'Lead Researcher',
+      icon: '🔬',
+      focus: 'Primary analysis and synthesis',
+      content: leadContent,
+      color: '#8B5CF6'
+    });
 
-  console.log('[DxO] Step 2: Critical Reviewer starting...');
-  const reviewerPrompt = getDxOPrompts.reviewer(question, leadContent);
-  const reviewerContent = await callLLM(reviewerPrompt);
-  console.log('[DxO] Step 2: Critical Reviewer complete');
-  onRoleComplete('criticalReviewer', {
-    role: 'Critical Reviewer',
-    icon: '🔍',
-    focus: 'Identify gaps and weaknesses',
-    content: reviewerContent,
-    color: '#EF4444'
-  });
+    console.log('[DxO Stream] Step 2/5: Critical Reviewer');
+    const reviewerPrompt = getDxOPrompts.reviewer(question, leadContent);
+    const reviewerContent = await callDxORole('Critical Reviewer', reviewerPrompt);
+    onRoleComplete('criticalReviewer', {
+      role: 'Critical Reviewer',
+      icon: '🔍',
+      focus: 'Identify gaps and weaknesses',
+      content: reviewerContent,
+      color: '#EF4444'
+    });
 
-  console.log('[DxO] Step 3: Domain Expert starting...');
-  const expertPrompt = getDxOPrompts.expert(question, `Lead's Analysis:\n${leadContent}\n\nReviewer's Critique:\n${reviewerContent}`);
-  const expertContent = await callLLM(expertPrompt);
-  console.log('[DxO] Step 3: Domain Expert complete');
-  onRoleComplete('domainExpert', {
-    role: 'Domain Expert',
-    icon: '📚',
-    focus: 'Deep domain knowledge',
-    content: expertContent,
-    color: '#3B82F6'
-  });
+    console.log('[DxO Stream] Step 3/5: Domain Expert');
+    const expertPrompt = getDxOPrompts.expert(question, `Lead's Analysis:\n${leadContent}\n\nReviewer's Critique:\n${reviewerContent}`);
+    const expertContent = await callDxORole('Domain Expert', expertPrompt);
+    onRoleComplete('domainExpert', {
+      role: 'Domain Expert',
+      icon: '📚',
+      focus: 'Deep domain knowledge',
+      content: expertContent,
+      color: '#3B82F6'
+    });
 
-  console.log('[DxO] Step 4: Data Analyst starting...');
-  const analystPrompt = getDxOPrompts.analyst(question, `Lead's Analysis:\n${leadContent}\n\nReviewer's Critique:\n${reviewerContent}\n\nExpert Input:\n${expertContent}`);
-  const analystContent = await callLLM(analystPrompt);
-  console.log('[DxO] Step 4: Data Analyst complete');
-  onRoleComplete('dataAnalyst', {
-    role: 'Data Analyst',
-    icon: '📊',
-    focus: 'Quantitative reasoning',
-    content: analystContent,
-    color: '#10B981'
-  });
+    console.log('[DxO Stream] Step 4/5: Data Analyst');
+    const analystPrompt = getDxOPrompts.analyst(question, `Lead's Analysis:\n${leadContent}\n\nReviewer's Critique:\n${reviewerContent}\n\nExpert Input:\n${expertContent}`);
+    const analystContent = await callDxORole('Data Analyst', analystPrompt);
+    onRoleComplete('dataAnalyst', {
+      role: 'Data Analyst',
+      icon: '📊',
+      focus: 'Quantitative reasoning',
+      content: analystContent,
+      color: '#10B981'
+    });
 
-  console.log('[DxO] Step 5: Final Decision starting...');
-  const finalPrompt = getDxOPrompts.final(question, 
-    `Lead's Analysis:\n${leadContent}\n\nReviewer's Critique:\n${reviewerContent}\n\nExpert Input:\n${expertContent}\n\nAnalyst's Data:\n${analystContent}`
-  );
-  const finalContent = await callLLM(finalPrompt);
-  console.log('[DxO] Step 5: Final Decision complete');
-  onRoleComplete('finalDecision', {
-    role: 'Final Decision',
-    icon: '✨',
-    title: 'Synthesized Recommendation',
-    content: finalContent,
-    color: '#F59E0B',
-    revisions: []
-  });
+    console.log('[DxO Stream] Step 5/5: Final Decision');
+    const finalPrompt = getDxOPrompts.final(question, 
+      `Lead's Analysis:\n${leadContent}\n\nReviewer's Critique:\n${reviewerContent}\n\nExpert Input:\n${expertContent}\n\nAnalyst's Data:\n${analystContent}`
+    );
+    const finalContent = await callDxORole('Final Decision', finalPrompt);
+    onRoleComplete('finalDecision', {
+      role: 'Final Decision',
+      icon: '✨',
+      title: 'Synthesized Recommendation',
+      content: finalContent,
+      color: '#F59E0B',
+      revisions: []
+    });
+    
+    console.log('[DxO Stream] All 5 roles completed successfully');
+  } catch (error) {
+    console.error('[DxO Stream] Pipeline failed:', error.message);
+    if (onError) {
+      onError({
+        role: error.role || 'Unknown',
+        message: error.message,
+        diagnostic: error.diagnostic || `Role failed: ${error.message}`
+      });
+    }
+    throw error;
+  }
 };

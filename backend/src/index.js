@@ -167,26 +167,43 @@ app.post('/api/dxo/stream', async (req, res) => {
     if (config.useMock) {
       const roles = ['leadResearcher', 'criticalReviewer', 'domainExpert', 'dataAnalyst', 'finalDecision'];
       
-      // Send each role's response sequentially with delay
       for (const role of roles) {
         await simulateDelay(1500 + Math.random() * 1000);
         res.write(`data: ${JSON.stringify({ type: role, data: mockDxOResponses[role] })}\n\n`);
       }
+      res.write(`data: ${JSON.stringify({ type: 'complete' })}\n\n`);
+      res.end();
     } else {
-      // Live LLM processing with streaming
-      await processDxORequestStreaming(question, (roleType, roleData) => {
-        res.write(`data: ${JSON.stringify({ type: roleType, data: roleData })}\n\n`);
-      });
+      await processDxORequestStreaming(
+        question, 
+        (roleType, roleData) => {
+          res.write(`data: ${JSON.stringify({ type: roleType, data: roleData })}\n\n`);
+        },
+        (errorInfo) => {
+          console.error('[DxO Stream] Role failure:', errorInfo);
+          res.write(`data: ${JSON.stringify({ 
+            type: 'error', 
+            role: errorInfo.role,
+            message: errorInfo.message,
+            diagnostic: errorInfo.diagnostic 
+          })}\n\n`);
+        }
+      );
+      res.write(`data: ${JSON.stringify({ type: 'complete' })}\n\n`);
+      res.end();
     }
-    
-    // Signal completion
-    res.write(`data: ${JSON.stringify({ type: 'complete' })}\n\n`);
-    res.end();
 
   } catch (error) {
-    console.error('[DxO Stream] Error:', error);
-    res.write(`data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`);
-    res.end();
+    console.error('[DxO Stream] Unhandled error:', error.message);
+    if (!res.writableEnded) {
+      res.write(`data: ${JSON.stringify({ 
+        type: 'error', 
+        role: error.role || 'Unknown',
+        message: error.message,
+        diagnostic: error.diagnostic || `Pipeline failed: ${error.message}`
+      })}\n\n`);
+      res.end();
+    }
   }
 });
 
