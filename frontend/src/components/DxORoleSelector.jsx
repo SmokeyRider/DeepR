@@ -105,23 +105,23 @@ export function DxORoleSelector({ roles, onRolesChange }) {
               key={role.id}
               className="p-4 bg-deepr-bg rounded-lg border border-deepr-border"
             >
-              <div className="flex items-start gap-4">
-                <div className="flex-1">
+              <div className="flex flex-col md:flex-row md:items-start gap-3 md:gap-4">
+                <div className="flex-1 min-w-0">
                   <label className="block text-sm text-deepr-text-muted mb-1">Role Name</label>
                   <input
                     type="text"
                     value={role.name}
                     onChange={(e) => updateRole(index, 'name', e.target.value)}
-                    className="input-field"
+                    className="input-field w-full"
                   />
                 </div>
 
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <label className="block text-sm text-deepr-text-muted mb-1">Assigned Model</label>
                   <select
                     value={role.model}
                     onChange={(e) => updateRole(index, 'model', e.target.value)}
-                    className="input-field"
+                    className="input-field w-full"
                   >
                     {availableModels.map((model) => (
                       <option key={model.id} value={model.id}>
@@ -131,19 +131,19 @@ export function DxORoleSelector({ roles, onRolesChange }) {
                   </select>
                 </div>
 
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <label className="block text-sm text-deepr-text-muted mb-1">Perspective/Focus</label>
                   <input
                     type="text"
                     value={role.focus}
                     onChange={(e) => updateRole(index, 'focus', e.target.value)}
-                    className="input-field"
+                    className="input-field w-full"
                   />
                 </div>
 
                 <button
                   onClick={() => removeRole(index)}
-                  className="mt-6 p-2 text-deepr-text-muted hover:text-deepr-error transition-colors"
+                  className="self-end md:self-auto md:mt-6 p-2 text-deepr-text-muted hover:text-deepr-error transition-colors"
                   disabled={editingRoles.length <= 2}
                 >
                   <X className="w-4 h-4" />
