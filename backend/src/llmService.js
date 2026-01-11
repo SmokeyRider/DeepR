@@ -654,3 +654,204 @@ export const processDxORequestStreaming = async (question, onRoleComplete, onErr
     throw error;
   }
 };
+
+const getAdversarialPrompts = {
+  advocate: (question, previousContext, roleConfig) => {
+    const baseInstructions = roleConfig?.instructions || 
+      'Provide your strongest, clearest opinion. Take a firm stance. Do not hedge. Present your reasoning in a structured way.';
+    
+    let prompt = `You are the Advocate. ${baseInstructions}
+
+Question/Topic: ${question}`;
+
+    if (previousContext) {
+      prompt += `
+
+Previous debate context:
+${previousContext}
+
+Build upon or refine your previous position based on the critique and arbiter's feedback. Strengthen your argument.`;
+    }
+
+    prompt += `
+
+Respond in markdown format with clear structure.`;
+    return prompt;
+  },
+
+  challenger: (question, advocateOutput, roleConfig) => {
+    const baseInstructions = roleConfig?.instructions || 
+      "Critique the Advocate's argument. Identify logical flaws, missing evidence, weak assumptions, and alternative interpretations. Be adversarial, rigorous, and unsparing.";
+    
+    return `You are the Challenger. ${baseInstructions}
+
+Question/Topic: ${question}
+
+Advocate's Argument:
+${advocateOutput}
+
+Do not offer a final conclusion—only critique. Be thorough in identifying weaknesses.
+
+Respond in markdown format with clear structure.`;
+  },
+
+  arbiter: (question, advocateOutput, challengerOutput, isSmartMode, cycleNumber, roleConfig) => {
+    const baseInstructions = roleConfig?.instructions || 
+      "Evaluate both the Advocate's argument and the Challenger's critique. Identify which points hold up and synthesize the strongest possible final position.";
+    
+    let prompt = `You are the Arbiter. ${baseInstructions}
+
+Question/Topic: ${question}
+
+Advocate's Argument:
+${advocateOutput}
+
+Challenger's Critique:
+${challengerOutput}
+
+Your output should be decisive, well-reasoned, and refined.`;
+
+    if (isSmartMode) {
+      prompt += `
+
+IMPORTANT: This is cycle ${cycleNumber} of the debate. After completing your evaluation, you MUST explicitly state at the end of your response whether another debate cycle is needed:
+
+If the argument has been sufficiently refined and no additional cycles would meaningfully improve it, end your response with:
+"[CONVERGENCE: YES - The debate has reached a well-refined conclusion.]"
+
+If additional debate would meaningfully improve the conclusion, end your response with:
+"[CONVERGENCE: NO - Another cycle would help because: (brief reason)]"
+
+You must include one of these exact markers.`;
+    }
+
+    prompt += `
+
+Respond in markdown format with clear structure.`;
+    return prompt;
+  }
+};
+
+const processAdversarialRequestStreaming = async (question, roles, turnLimit, onCycleStart, onRoleComplete, onCycleComplete, onError) => {
+  const isSmartMode = turnLimit === 'smart';
+  const parsedLimit = typeof turnLimit === 'string' ? parseInt(turnLimit, 10) : turnLimit;
+  const maxCycles = isSmartMode ? 5 : Math.min(Math.max(parsedLimit || 1, 1), 3);
+  const cycles = [];
+  let previousContext = '';
+  let converged = false;
+  let stopReason = null;
+
+  const advocateRole = roles.find(r => r.id === 'advocate') || roles[0];
+  const challengerRole = roles.find(r => r.id === 'challenger') || roles[1];
+  const arbiterRole = roles.find(r => r.id === 'arbiter') || roles[2];
+
+  const callAdversarialRole = async (roleName, prompt, model) => {
+    const provider = getProviderForModel(model);
+    console.log(`[Adversarial] ${roleName} using model: ${model} (${provider}), prompt length: ${prompt.length}`);
+    
+    const startTime = Date.now();
+    let content = null;
+    
+    try {
+      switch (provider) {
+        case 'openai':
+          content = await callOpenAI(prompt, model, ` ${roleName}`, 8192);
+          break;
+        case 'anthropic':
+          content = await callAnthropic(prompt, model, ` ${roleName}`, 8192);
+          break;
+        case 'gemini':
+          content = await callGemini(prompt, model, ` ${roleName}`, 8192);
+          break;
+        case 'openrouter':
+          content = await callOpenRouter(prompt, model, ` ${roleName}`, 8192);
+          break;
+        default:
+          throw new Error(`Unknown provider: ${provider}`);
+      }
+      
+      const elapsed = Date.now() - startTime;
+      console.log(`[Adversarial] ${roleName} completed in ${elapsed}ms, response length: ${content?.length || 0}`);
+      
+      if (!content || content.trim() === '') {
+        throw new Error(`${roleName} returned empty response`);
+      }
+      
+      return content;
+    } catch (error) {
+      console.error(`[Adversarial] ${roleName} failed:`, error.message);
+      const enhancedError = new Error(`${roleName} failed: ${error.message}`);
+      enhancedError.role = roleName;
+      throw enhancedError;
+    }
+  };
+
+  try {
+    for (let cycle = 1; cycle <= maxCycles && !converged; cycle++) {
+      console.log(`[Adversarial] Starting cycle ${cycle}/${maxCycles}`);
+      onCycleStart(cycle);
+
+      const advocatePrompt = getAdversarialPrompts.advocate(question, previousContext, advocateRole);
+      const advocateOutput = await callAdversarialRole('Advocate', advocatePrompt, advocateRole.model);
+      onRoleComplete('advocate', advocateOutput);
+
+      const challengerPrompt = getAdversarialPrompts.challenger(question, advocateOutput, challengerRole);
+      const challengerOutput = await callAdversarialRole('Challenger', challengerPrompt, challengerRole.model);
+      onRoleComplete('challenger', challengerOutput);
+
+      const arbiterPrompt = getAdversarialPrompts.arbiter(question, advocateOutput, challengerOutput, isSmartMode, cycle, arbiterRole);
+      const arbiterOutput = await callAdversarialRole('Arbiter', arbiterPrompt, arbiterRole.model);
+      onRoleComplete('arbiter', arbiterOutput);
+
+      if (isSmartMode) {
+        const convergenceMatch = arbiterOutput.match(/\[CONVERGENCE:\s*(YES|NO)[^\]]*\]/i);
+        if (convergenceMatch) {
+          converged = convergenceMatch[1].toUpperCase() === 'YES';
+          if (converged) {
+            const reasonMatch = arbiterOutput.match(/\[CONVERGENCE:\s*YES\s*-\s*([^\]]+)\]/i);
+            stopReason = reasonMatch ? reasonMatch[1].trim() : 'The Arbiter determined the conclusion is well-refined.';
+          }
+        }
+        
+        if (cycle >= maxCycles && !converged) {
+          converged = true;
+          stopReason = `Reached maximum of ${maxCycles} cycles. The Arbiter recommended further refinement but the limit was reached.`;
+        }
+      }
+
+      const cycleData = {
+        advocate_output: advocateOutput,
+        challenger_output: challengerOutput,
+        arbiter_output: arbiterOutput,
+        converged: converged
+      };
+      cycles.push(cycleData);
+      onCycleComplete(cycle, cycleData);
+
+      previousContext = `Previous Advocate Position:\n${advocateOutput}\n\nPrevious Challenger Critique:\n${challengerOutput}\n\nArbiter's Synthesis:\n${arbiterOutput}`;
+    }
+
+    const finalOutput = cycles[cycles.length - 1]?.arbiter_output || '';
+    const cleanFinalOutput = finalOutput.replace(/\[CONVERGENCE:[^\]]+\]/gi, '').trim();
+    
+    const summary = `Completed ${cycles.length} debate cycle${cycles.length !== 1 ? 's' : ''}.`;
+
+    return {
+      cycles,
+      final_output: cleanFinalOutput,
+      summary,
+      stop_reason: stopReason
+    };
+  } catch (error) {
+    console.error('[Adversarial] Pipeline failed:', error.message);
+    if (onError) {
+      onError({
+        role: error.role || 'Unknown',
+        message: error.message
+      });
+    }
+    throw error;
+  }
+};
+
+export { processAdversarialRequestStreaming };

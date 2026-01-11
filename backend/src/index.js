@@ -5,7 +5,7 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { config } from './config.js';
 import { mockCouncilResponses, mockDxOResponses, simulateDelay } from './mockData.js';
-import { processCouncilRequest, processDxORequest, processDxORequestStreaming } from './llmService.js';
+import { processCouncilRequest, processDxORequest, processDxORequestStreaming, processAdversarialRequestStreaming } from './llmService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -207,6 +207,95 @@ app.post('/api/dxo/stream', async (req, res) => {
   }
 });
 
+// Adversarial Debate streaming endpoint
+app.post('/api/adversarial/stream', async (req, res) => {
+  try {
+    const { question, roles, turnLimit } = req.body;
+    
+    if (!question) {
+      return res.status(400).json({ error: 'Question is required' });
+    }
+
+    console.log(`[Adversarial Stream] Processing question: ${question.substring(0, 50)}...`);
+    console.log(`[Adversarial Stream] Turn limit: ${turnLimit}, Roles: ${roles?.map(r => r.name).join(', ')}`);
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    if (config.useMock) {
+      for (let cycle = 1; cycle <= (turnLimit === 'smart' ? 2 : turnLimit); cycle++) {
+        res.write(`data: ${JSON.stringify({ type: 'cycle_start', cycle })}\n\n`);
+        await simulateDelay(500);
+        res.write(`data: ${JSON.stringify({ type: 'role_complete', role: 'advocate' })}\n\n`);
+        await simulateDelay(500);
+        res.write(`data: ${JSON.stringify({ type: 'role_complete', role: 'challenger' })}\n\n`);
+        await simulateDelay(500);
+        res.write(`data: ${JSON.stringify({ type: 'role_complete', role: 'arbiter' })}\n\n`);
+        res.write(`data: ${JSON.stringify({ 
+          type: 'cycle_complete', 
+          cycle,
+          data: {
+            advocate_output: '## Mock Advocate\n\nThis is a mock advocate response.',
+            challenger_output: '## Mock Challenger\n\nThis is a mock challenger response.',
+            arbiter_output: '## Mock Arbiter\n\nThis is a mock arbiter synthesis.',
+            converged: cycle >= 2
+          }
+        })}\n\n`);
+      }
+      res.write(`data: ${JSON.stringify({ 
+        type: 'complete', 
+        final_output: '## Final Verdict\n\nThis is the mock final verdict.',
+        summary: 'Completed 2 mock debate cycles.',
+        stop_reason: 'Mock mode convergence'
+      })}\n\n`);
+      res.end();
+    } else {
+      const result = await processAdversarialRequestStreaming(
+        question,
+        roles || [],
+        turnLimit || 'smart',
+        (cycle) => {
+          res.write(`data: ${JSON.stringify({ type: 'cycle_start', cycle })}\n\n`);
+        },
+        (role, output) => {
+          res.write(`data: ${JSON.stringify({ type: 'role_complete', role })}\n\n`);
+        },
+        (cycle, data) => {
+          res.write(`data: ${JSON.stringify({ type: 'cycle_complete', cycle, data })}\n\n`);
+        },
+        (errorInfo) => {
+          console.error('[Adversarial Stream] Role failure:', errorInfo);
+          res.write(`data: ${JSON.stringify({ 
+            type: 'error', 
+            role: errorInfo.role,
+            message: errorInfo.message
+          })}\n\n`);
+        }
+      );
+      
+      res.write(`data: ${JSON.stringify({ 
+        type: 'complete', 
+        final_output: result.final_output,
+        summary: result.summary,
+        stop_reason: result.stop_reason
+      })}\n\n`);
+      res.end();
+    }
+
+  } catch (error) {
+    console.error('[Adversarial Stream] Unhandled error:', error.message);
+    if (!res.writableEnded) {
+      res.write(`data: ${JSON.stringify({ 
+        type: 'error', 
+        role: error.role || 'Unknown',
+        message: error.message
+      })}\n\n`);
+      res.end();
+    }
+  }
+});
+
 // Configuration endpoint (for debug/demo)
 app.get('/api/config', (req, res) => {
   res.json({
@@ -238,6 +327,7 @@ app.listen(config.port, () => {
   console.log(`\n   Endpoints:`);
   console.log(`   - POST /api/council - LLM Council framework`);
   console.log(`   - POST /api/dxo - DxO Decision framework`);
+  console.log(`   - POST /api/adversarial/stream - Adversarial Debate framework`);
   console.log(`   - POST /api/council/stream - Streaming council responses`);
   console.log(`   - POST /api/dxo/stream - Streaming DxO responses`);
   console.log(`   - GET /api/health - Health check`);

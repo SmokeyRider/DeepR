@@ -1,9 +1,10 @@
 # DeepR AI Frameworks
 
 ## Overview
-DeepR is an AI decision-making framework demo that showcases two LLM orchestration patterns:
+DeepR is an AI decision-making framework demo that showcases three LLM orchestration patterns:
 - **AI LLM Council**: Send prompts to multiple AI models simultaneously, watch them deliberate, and synthesize the best response through a Chairman model.
 - **DxO Decision Framework**: Sequential role-based analysis with Lead Researcher, Critical Reviewer, Domain Expert, and Data Analyst roles.
+- **Adversarial Debate**: A single model argues (Advocate), critiques itself (Challenger), and judges the debate (Arbiter) to produce a refined, high-confidence conclusion.
 
 ## Project Structure
 ```
@@ -72,6 +73,7 @@ cd backend && node src/index.js & cd frontend && npm run dev
 ## API Endpoints
 - `POST /api/council` - LLM Council framework
 - `POST /api/dxo` - DxO Decision framework
+- `POST /api/adversarial/stream` - Adversarial Debate framework (streaming only)
 - `POST /api/council/stream` - Streaming council responses
 - `POST /api/dxo/stream` - Streaming DxO responses
 - `GET /api/health` - Health check
@@ -89,12 +91,25 @@ The app is configured as a Progressive Web App:
 - Build: `npm run build --prefix frontend`
 - Production: Backend serves the API, frontend is built as static assets
 
+## Adversarial Debate Mode
+The Adversarial mode uses three roles in a cyclical debate pattern:
+1. **Advocate**: Takes a strong position and argues for it
+2. **Challenger**: Attacks the argument, finding flaws and weaknesses  
+3. **Arbiter**: Evaluates both sides and synthesizes the best conclusion
+
+### Turn Limit Options
+- **Smart** (default): AI determines when conclusion is refined enough (max 5 cycles)
+- **1-3 Turns**: Fixed number of debate cycles
+
+In Smart mode, the Arbiter decides whether another cycle would improve the conclusion, automatically stopping when the argument has been sufficiently refined.
+
 ## Recent Changes (January 2026)
+- **Adversarial Debate mode**: New debate framework with Advocate, Challenger, and Arbiter roles
 - **Multi-provider LLM support**: Added Anthropic, Google Gemini, and OpenRouter alongside OpenAI
 - **29 models available**: 12 OpenAI + 4 Anthropic + 4 Gemini + 9 OpenRouter
 - **Provider-grouped UI**: Frontend model selector displays models grouped by provider
 - **Default council members**: GPT-5.1 (OpenAI), Claude Sonnet 4.5 (Anthropic), Gemini 2.5 Flash (Google)
 - Added PWA support with vite-plugin-pwa
 - Responsive header: "DeepR" title hidden on small screens
-- State preservation when switching between Council/DxO modes
+- State preservation when switching between Council/DxO/Adversarial modes
 - Improved handling of empty LLM responses

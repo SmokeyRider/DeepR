@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Header, CouncilView, DxOView } from './components';
+import { Header, CouncilView, DxOView, AdversarialView } from './components';
 
 function App() {
   const [mode, setMode] = useState('council');
@@ -45,12 +45,15 @@ function App() {
           </div>
         )}
 
-        {/* Mode Views - both mounted to preserve state, visibility controlled via CSS */}
+        {/* Mode Views - all mounted to preserve state, visibility controlled via CSS */}
         <div className={mode === 'council' ? 'block' : 'hidden'}>
           <CouncilView />
         </div>
         <div className={mode === 'dxo' ? 'block' : 'hidden'}>
           <DxOView />
+        </div>
+        <div className={mode === 'adversarial' ? 'block' : 'hidden'}>
+          <AdversarialView />
         </div>
       </main>
 

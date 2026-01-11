@@ -11,3 +11,4 @@ export { FinalDecisionCard } from './FinalDecisionCard';
 export { DxORoleSelector } from './DxORoleSelector';
 export { CouncilView } from './CouncilView';
 export { DxOView } from './DxOView';
+export { AdversarialView } from './AdversarialView';

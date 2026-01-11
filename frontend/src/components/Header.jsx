@@ -1,6 +1,7 @@
 const navItems = [
   { id: 'council', label: 'Council' },
   { id: 'dxo', label: 'DxO' },
+  { id: 'adversarial', label: 'Adversarial' },
 ];
 
 export function Header({ mode, onModeChange }) {
