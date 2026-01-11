@@ -1,0 +1,108 @@
+Extend the existing DeepR app by adding a new reasoning mode called 
+“Adversarial Debate Mode.” This mode must use a single LLM in a 
+three‑stage sequential loop:
+
+1. Advocate – generates a strong initial opinion.
+2. Challenger – critiques and attacks the Advocate’s reasoning.
+3. Arbiter – evaluates both and produces the strongest final conclusion.
+
+Add this mode to the mode selector UI with the description:
+“A single model argues, critiques itself, and judges the debate to produce a refined, high‑confidence conclusion.”
+
+----------------------------------------------------------------------
+TURN LIMIT FEATURE (ONLY FOR THIS MODE)
+----------------------------------------------------------------------
+
+Add a new UI dropdown labeled “Turn Limit” that appears ONLY when 
+Adversarial Debate Mode is selected.
+
+The dropdown options must be:
+- Smart (default)
+- 1
+- 2
+- 3
+- 4
+- 5
+
+Behavior:
+
+1. If the user selects a fixed number (1–5):
+   - Run exactly that many full cycles.
+   - One cycle = Advocate → Challenger → Arbiter.
+   - Do not exceed the selected number of cycles.
+
+2. If the user selects “Smart”:
+   - After each cycle, instruct the Arbiter to evaluate whether another 
+     cycle would meaningfully improve the conclusion.
+   - If the Arbiter declares convergence, stop.
+   - Enforce a hard cap of 10 cycles to prevent runaway loops.
+
+----------------------------------------------------------------------
+SYSTEM PROMPTS FOR EACH ROLE
+----------------------------------------------------------------------
+
+Advocate system prompt:
+“You are the Advocate. Provide your strongest, clearest opinion on the 
+user’s question. Take a firm stance. Do not hedge. Present your reasoning 
+in a structured way.”
+
+Challenger system prompt:
+“You are the Challenger. Your job is to critique the Advocate’s argument. 
+Identify logical flaws, missing evidence, weak assumptions, and alternative 
+interpretations. Be adversarial, rigorous, and unsparing. Do not offer a 
+final conclusion—only critique.”
+
+Arbiter system prompt:
+“You are the Arbiter. You have read the Advocate’s argument and the 
+Challenger’s critique. Evaluate both, identify which points hold up, and 
+synthesize the strongest possible final position. Your output should be 
+decisive, well‑reasoned, and refined.”
+
+For Smart Limit mode, wrap the Arbiter’s instructions with:
+“After completing this cycle, evaluate whether additional cycles would 
+meaningfully improve the conclusion. If not, declare convergence. If yes, 
+request another cycle. Never exceed 10 total cycles.”
+
+----------------------------------------------------------------------
+BACKEND IMPLEMENTATION REQUIREMENTS
+----------------------------------------------------------------------
+
+- Add a new route or handler for Adversarial Debate Mode.
+- Accept a new parameter: turnLimit.
+- If turnLimit is a number, loop exactly that many cycles.
+- If turnLimit is “Smart”, loop until Arbiter signals convergence or 
+  until 10 cycles have been reached.
+- Use the same LLM for all three stages.
+- Default temperatures:
+  - Advocate: 0.3
+  - Challenger: 0.7
+  - Arbiter: 0.4
+
+Return a structured JSON response:
+{
+  "cycles": [
+    {
+      "advocate_output": "...",
+      "challenger_output": "...",
+      "arbiter_output": "...",
+      "converged": true/false
+    },
+    ...
+  ],
+  "final_output": "Arbiter’s final conclusion"
+}
+
+----------------------------------------------------------------------
+UI REQUIREMENTS
+----------------------------------------------------------------------
+
+- Add “Adversarial Debate” to the mode selector.
+- When this mode is selected:
+  - Show the Turn Limit dropdown.
+  - Hide the dropdown for all other modes.
+- Display each cycle’s Advocate, Challenger, and Arbiter outputs in 
+  collapsible sections.
+- Display the final Arbiter conclusion at the bottom.
+
+Implement all changes cleanly and modularly so future modes can be added 
+without modifying this logic.
