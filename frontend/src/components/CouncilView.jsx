@@ -4,6 +4,7 @@ import { QuestionInput } from './QuestionInput';
 import { CouncilMemberCard } from './CouncilMemberCard';
 import { ChairmanCard } from './ChairmanCard';
 import { CouncilMemberSelector } from './CouncilMemberSelector';
+import { SaveShareButtons } from './SaveShareButtons';
 
 const howItWorks = [
   { step: 1, title: 'Ask Your Question', description: 'Enter your research question or topic for the council to deliberate' },
@@ -161,6 +162,16 @@ export function CouncilView() {
               chairman={results?.chairman}
               isLoading={loadingStates.chairman || (loadingStates.members && !results?.chairman)}
             />
+            {results?.chairman && !loadingStates.chairman && (
+              <div className="flex justify-end mt-4">
+                <SaveShareButtons
+                  prompt={question}
+                  mode="council"
+                  config={{ selectedMembers, chairmanModel }}
+                  results={results}
+                />
+              </div>
+            )}
           </div>
         </div>
       )}

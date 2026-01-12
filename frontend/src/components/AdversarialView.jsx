@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Swords, ArrowDown, Loader2 } from 'lucide-react';
 import { MarkdownRenderer } from './MarkdownRenderer';
+import { SaveShareButtons } from './SaveShareButtons';
 
 const defaultRoles = [
   { 
@@ -157,11 +158,11 @@ function AdversarialRoleSelector({ roles, onRolesChange }) {
   );
 }
 
-function CycleCard({ cycle, cycleNumber, isExpanded, onToggle }) {
+function CycleCard({ cycle, cycleNumber, isExpanded, onToggle, isLastCycle }) {
   const roleData = [
     { key: 'advocate', name: 'Advocate', icon: '⚔️', color: '#10B981' },
     { key: 'challenger', name: 'Challenger', icon: '🛡️', color: '#EF4444' },
-    { key: 'arbiter', name: 'Arbiter', icon: '⚖️', color: '#F59E0B' },
+    ...(isLastCycle ? [] : [{ key: 'arbiter', name: 'Arbiter', icon: '⚖️', color: '#F59E0B' }]),
   ];
 
   return (
@@ -481,14 +482,23 @@ export function AdversarialView() {
               cycleNumber={index + 1}
               isExpanded={expandedCycles[index + 1]}
               onToggle={() => toggleCycle(index + 1)}
+              isLastCycle={index === results.cycles.length - 1 && !!results.final_output}
             />
           ))}
 
           {results.final_output && (
             <div className="card bg-gradient-to-br from-deepr-card to-deepr-warning/10 border-deepr-warning/30">
-              <div className="flex items-center gap-2 mb-4">
-                <span className="text-2xl">⚖️</span>
-                <span className="text-xl font-bold text-deepr-text">Final Verdict</span>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">⚖️</span>
+                  <span className="text-xl font-bold text-deepr-text">Final Verdict</span>
+                </div>
+                <SaveShareButtons
+                  prompt={question}
+                  mode="adversarial"
+                  config={{ roles, turnLimit }}
+                  results={results}
+                />
               </div>
               <div className="prose-custom">
                 <MarkdownRenderer content={results.final_output} />

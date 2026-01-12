@@ -4,6 +4,7 @@ import { QuestionInput } from './QuestionInput';
 import { RoleCard } from './RoleCard';
 import { FinalDecisionCard } from './FinalDecisionCard';
 import { DxORoleSelector } from './DxORoleSelector';
+import { SaveShareButtons } from './SaveShareButtons';
 
 const defaultRoles = [
   { id: 'lead', name: 'Lead Researcher', model: 'gpt-5.1', focus: 'Primary analysis and synthesis', instructions: 'Conduct thorough research analysis, identify key findings and patterns.' },
@@ -247,6 +248,16 @@ export function DxOView() {
                   decision={results?.finalDecision}
                   isLoading={getPhaseStatus('finalDecision') === 'loading'}
                 />
+                {results?.finalDecision && getPhaseStatus('finalDecision') === 'complete' && (
+                  <div className="flex justify-end mt-4">
+                    <SaveShareButtons
+                      prompt={question}
+                      mode="dxo"
+                      config={{ roles }}
+                      results={results}
+                    />
+                  </div>
+                )}
               </div>
             )}
           </div>
