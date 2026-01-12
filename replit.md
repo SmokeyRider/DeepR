@@ -103,8 +103,27 @@ The Adversarial mode uses three roles in a cyclical debate pattern:
 
 In Smart mode, the Arbiter decides whether another cycle would improve the conclusion, automatically stopping when the argument has been sufficiently refined.
 
+## Save & Share
+All three modes support exporting completed prompts:
+- **Save**: Download results as JSON file (includes prompt, mode, configuration, and all outputs)
+- **Copy**: Copy JSON to clipboard for sharing
+
+Export data structure:
+```json
+{
+  "version": "1.0",
+  "exportedAt": "2026-01-12T...",
+  "mode": "council|dxo|adversarial",
+  "prompt": "...",
+  "config": { ... },
+  "results": { ... }
+}
+```
+
 ## Recent Changes (January 2026)
+- **Save/Share functionality**: Export completed prompts as JSON with Download and Copy buttons
 - **Adversarial Debate mode**: New debate framework with Advocate, Challenger, and Arbiter roles
+- **Fixed duplicate arbiter**: Final arbiter response now only shown in Final Verdict block (not duplicated in cycle card)
 - **Multi-provider LLM support**: Added Anthropic, Google Gemini, and OpenRouter alongside OpenAI
 - **29 models available**: 12 OpenAI + 4 Anthropic + 4 Gemini + 9 OpenRouter
 - **Provider-grouped UI**: Frontend model selector displays models grouped by provider
