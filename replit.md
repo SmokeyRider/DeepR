@@ -106,18 +106,28 @@ In Smart mode, the Arbiter decides whether another cycle would improve the concl
 ## Save & Share
 All three modes support exporting completed prompts:
 - **Save**: Download results as JSON file (includes prompt, mode, configuration, and all outputs)
-- **Copy**: Copy JSON to clipboard for sharing
+- **Copy**: Copy as formatted Markdown for sharing in Slack, Discord, docs, or email
 
-Export data structure:
-```json
-{
-  "version": "1.0",
-  "exportedAt": "2026-01-12T...",
-  "mode": "council|dxo|adversarial",
-  "prompt": "...",
-  "config": { ... },
-  "results": { ... }
-}
+Export formats:
+- **JSON Download**: Full structured data for importing/backup
+- **Markdown Copy**: Human-readable format with headers, bullet points, and formatting
+
+Example Markdown output:
+```markdown
+# DeepR Council Analysis
+
+**Prompt:** What are the pros and cons of...
+
+## Council Member Responses
+### GPT-5.1
+[Their response...]
+
+## Chairman's Synthesis
+**Consensus Score:** 85%
+[Final synthesis...]
+
+---
+*Exported from DeepR on January 12, 2026*
 ```
 
 ## Recent Changes (January 2026)
