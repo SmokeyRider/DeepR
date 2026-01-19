@@ -1,7 +1,9 @@
 module.exports = async function (context, req) {
   context.log('Health check endpoint called');
 
-  const useMock = process.env.USE_MOCK === 'true';
+  // For development, hardcode USE_MOCK to true
+  // TODO: Make this configurable via environment variables later
+  const useMock = process.env.USE_MOCK === 'true' || true; // Always use mock for now
   const hasOpenAIKey = !!(process.env.AZURE_OPENAI_API_KEY || process.env.AI_INTEGRATIONS_OPENAI_API_KEY);
 
   context.res = {

@@ -32,6 +32,11 @@ jobs:
                const coredemo = require('@actions/core')
                return await coredemo.getIDToken()
            result-encoding: string
+      - name: Set Environment Variables
+        run: |
+          echo "USE_MOCK=${{ vars.USE_MOCK || 'true' }}" >> $GITHUB_ENV
+          echo "LOG_LEVEL=${{ vars.LOG_LEVEL || 'info' }}" >> $GITHUB_ENV
+          echo "NODE_ENV=${{ vars.NODE_ENV || 'production' }}" >> $GITHUB_ENV
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
@@ -46,13 +51,9 @@ jobs:
           github_id_token: ${{ steps.idtoken.outputs.result }}
           ###### End of Repository/Build Configurations ######
         env:
-          # Configuration Variables (from GitHub Variables)
-          USE_MOCK: ${{ vars.USE_MOCK }}
-          LOG_LEVEL: ${{ vars.LOG_LEVEL }}
-          NODE_ENV: ${{ vars.NODE_ENV }}
-          # Sensitive Variables (from GitHub Secrets) - for Phase 2
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
+          USE_MOCK: ${{ vars.USE_MOCK || 'true' }}
+          LOG_LEVEL: ${{ vars.LOG_LEVEL || 'info' }}
+          NODE_ENV: ${{ vars.NODE_ENV || 'production' }}
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'

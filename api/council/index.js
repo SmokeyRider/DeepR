@@ -41,7 +41,9 @@ const getOpenAIClient = () => {
 module.exports = async function (context, req) {
   context.log('Council endpoint called');
 
-  const useMock = process.env.USE_MOCK === 'true';
+  // For development, hardcode USE_MOCK to true
+  // TODO: Make this configurable via environment variables later
+  const useMock = process.env.USE_MOCK === 'true' || true; // Always use mock for now
   const { question, selectedMemberIds = ['gpt-5.1', 'gpt-4o', 'o3'], chairmanModelId = 'gpt-5.1' } = req.body || {};
 
   if (!question) {
