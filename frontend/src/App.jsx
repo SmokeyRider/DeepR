@@ -30,12 +30,18 @@ function App() {
             <div className={`
               inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs
               ${apiStatus.status === 'ok' 
-                ? 'bg-deepr-success/20 text-deepr-success' 
+                ? apiStatus.mode === 'mock'
+                  ? 'bg-amber-500/20 text-amber-600' 
+                  : 'bg-deepr-success/20 text-deepr-success'
                 : 'bg-deepr-error/20 text-deepr-error'
               }
             `}>
               <span className={`w-2 h-2 rounded-full ${
-                apiStatus.status === 'ok' ? 'bg-deepr-success' : 'bg-deepr-error'
+                apiStatus.status === 'ok' 
+                  ? apiStatus.mode === 'mock'
+                    ? 'bg-amber-500' 
+                    : 'bg-deepr-success'
+                  : 'bg-deepr-error'
               }`} />
               {apiStatus.status === 'ok' 
                 ? `API: ${apiStatus.mode === 'mock' ? 'Mock Mode' : 'Live'}`
