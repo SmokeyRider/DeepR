@@ -18,9 +18,12 @@ app.use(express.json());
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
+  const hasApiKeys = !!(config.providers.openai.apiKey && config.providers.openai.baseURL);
   res.json({ 
     status: 'ok', 
-    mode: config.useMock ? 'mock' : 'live',
+    mode: config.useMock || !hasApiKeys ? 'mock' : 'live',
+    useMock: config.useMock,
+    hasApiKeys,
     timestamp: new Date().toISOString()
   });
 });
@@ -42,23 +45,13 @@ app.post('/api/council', async (req, res) => {
       // Simulate API delay for realistic demo feel
       await simulateDelay(2000);
       
-      return res.json({
-        success: true,
-        mode: 'mock',
-        question,
-        data: mockCouncilResponses
-      });
+      return res.json(mockCouncilResponses);
     }
 
     // Real LLM processing with selected members
     const result = await processCouncilRequest(question, selectedMembers, chairmanModel);
     
-    return res.json({
-      success: true,
-      mode: 'live',
-      question,
-      data: result
-    });
+    return res.json(result);
 
   } catch (error) {
     console.error('[Council] Error:', error);
