@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "AI Decision Frameworks Demo - LLM Council, DxO & Adversarial Debate",
   "private": true,
+  "engines": {
+    "node": ">=20.19.0",
+    "npm": ">=10.0.0"
+  },
   "scripts": {
     "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
     "dev:frontend": "cd frontend && npm run dev",

@@ -1,0 +1,10 @@
+{
+  "nodejs": {
+    "version": "20"
+  },
+  "build": {
+    "commands": [
+      "cd frontend && npm ci && npm run build"
+    ]
+  }
+}
