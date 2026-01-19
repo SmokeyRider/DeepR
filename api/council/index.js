@@ -105,10 +105,13 @@ module.exports = async function (context, req) {
     const client = getOpenAIClient();
     const members = [];
     
+    // Helper to determine if model uses max_completion_tokens (o-series models)
+    const usesCompletionTokens = (model) => model.startsWith('o');
+    
     // Call each council member (model) in parallel
     const memberPromises = selectedMembers.map(async (modelId) => {
       try {
-        const completion = await client.chat.completions.create({
+        const requestParams = {
           model: modelId,
           messages: [
             {
@@ -120,9 +123,17 @@ module.exports = async function (context, req) {
               content: question
             }
           ],
-          max_tokens: 500,
-          temperature: 0.7
-        });
+          temperature: usesCompletionTokens(modelId) ? 1 : 0.7 // o-series models require temperature=1
+        };
+        
+        // Use correct token parameter based on model type
+        if (usesCompletionTokens(modelId)) {
+          requestParams.max_completion_tokens = 500;
+        } else {
+          requestParams.max_tokens = 500;
+        }
+        
+        const completion = await client.chat.completions.create(requestParams);
 
         return {
           id: modelId,
@@ -148,7 +159,7 @@ module.exports = async function (context, req) {
     // Generate chairman summary
     let chairmanSummary = "Council analysis complete.";
     try {
-      const summaryCompletion = await client.chat.completions.create({
+      const chairmanParams = {
         model: chairmanModel,
         messages: [
           {
@@ -160,9 +171,16 @@ module.exports = async function (context, req) {
             content: `Question: ${question}\n\nCouncil Members' Responses:\n${memberResults.map(m => `${m.name}: ${m.summary}`).join('\n\n')}\n\nProvide a synthesis:`
           }
         ],
-        max_tokens: 300,
-        temperature: 0.5
-      });
+        temperature: usesCompletionTokens(chairmanModel) ? 1 : 0.5
+      };
+      
+      if (usesCompletionTokens(chairmanModel)) {
+        chairmanParams.max_completion_tokens = 300;
+      } else {
+        chairmanParams.max_tokens = 300;
+      }
+      
+      const summaryCompletion = await client.chat.completions.create(chairmanParams);
       chairmanSummary = summaryCompletion.choices[0].message.content;
     } catch (error) {
       context.log('Error generating chairman summary', error);
