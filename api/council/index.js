@@ -200,14 +200,16 @@ module.exports = async function (context, req) {
         data: responseData
       }
     };
-      body: { message: 'Real Azure OpenAI integration coming in Phase 3' }
-    };
 
   } catch (error) {
     context.log.error('Council endpoint error:', error);
     context.res = {
       status: 500,
-      body: { error: 'Internal server error' }
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
+      body: { error: 'Internal server error', message: error.message }
     };
   }
 }
