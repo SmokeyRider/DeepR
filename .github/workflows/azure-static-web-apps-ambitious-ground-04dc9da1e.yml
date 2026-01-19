@@ -36,6 +36,22 @@ jobs:
                const coredemo = require('@actions/core')
                return await coredemo.getIDToken()
            result-encoding: string
+      - name: Create Azure Functions local.settings.json
+        run: |
+          cat > api/local.settings.json << EOF
+          {
+            "IsEncrypted": false,
+            "Values": {
+              "AzureWebJobsStorage": "",
+              "FUNCTIONS_WORKER_RUNTIME": "node",
+              "USE_MOCK": "${{ vars.USE_MOCK || 'true' }}",
+              "LOG_LEVEL": "${{ vars.LOG_LEVEL || 'info' }}",
+              "NODE_ENV": "${{ vars.NODE_ENV || 'production' }}",
+              "AZURE_OPENAI_API_KEY": "${{ secrets.AZURE_OPENAI_API_KEY }}",
+              "AZURE_OPENAI_ENDPOINT": "${{ secrets.AZURE_OPENAI_ENDPOINT }}"
+            }
+          }
+          EOF
       - name: Set Environment Variables
         run: |
           echo "USE_MOCK=${{ vars.USE_MOCK || 'true' }}" >> $GITHUB_ENV
