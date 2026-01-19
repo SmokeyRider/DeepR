@@ -5,18 +5,28 @@ function App() {
   const [mode, setMode] = useState('council');
   const [apiStatus, setApiStatus] = useState(null);
 
-  // Check API health on mount
+  // Check API health on mount and periodically
   useEffect(() => {
     const checkHealth = async () => {
       try {
-        const response = await fetch('/api/health');
+        // Add cache-busting parameter to avoid CDN caching
+        const timestamp = Date.now();
+        const response = await fetch(`/api/health?t=${timestamp}`);
         const data = await response.json();
         setApiStatus(data);
       } catch (err) {
         setApiStatus({ status: 'error', message: 'Backend not connected' });
       }
     };
+    
+    // Check immediately
     checkHealth();
+    
+    // Check every 30 seconds to pick up changes
+    const interval = setInterval(checkHealth, 30000);
+    
+    // Cleanup interval on unmount
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -28,25 +38,25 @@ function App() {
         {apiStatus && (
           <div className="mb-4 flex justify-end">
             <div className={`
-              inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs
-              ${apiStatus.status === 'ok' 
+              inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs cursor-pointer
+              ${apiStatus.status === 'healthy' 
                 ? apiStatus.mode === 'mock'
                   ? 'bg-amber-500/20 text-amber-600' 
                   : 'bg-deepr-success/20 text-deepr-success'
                 : 'bg-deepr-error/20 text-deepr-error'
               }
-            `}>
+            `} onClick={() => window.location.reload()}>
               <span className={`w-2 h-2 rounded-full ${
-                apiStatus.status === 'ok' 
+                apiStatus.status === 'healthy' 
                   ? apiStatus.mode === 'mock'
                     ? 'bg-amber-500' 
                     : 'bg-deepr-success'
                   : 'bg-deepr-error'
               }`} />
-              {apiStatus.status === 'ok' 
+              {apiStatus.status === 'healthy' 
                 ? `API: ${apiStatus.mode === 'mock' ? 'Mock Mode' : 'Live'}`
                 : 'API Disconnected'
-              }
+              } (click to refresh)
             </div>
           </div>
         )}
