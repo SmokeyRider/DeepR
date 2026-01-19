@@ -1,0 +1,17 @@
+{
+  "name": "deepr-api",
+  "version": "1.0.0",
+  "description": "Azure Functions API for DeepR",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "func start",
+    "test": "echo \"No tests specified\""
+  },
+  "dependencies": {
+    "openai": "^4.52.0"
+  },
+  "devDependencies": {
+    "azure-functions-core-tools": "^4.0.0"
+  }
+}
