@@ -108,8 +108,11 @@ module.exports = async function (context, req) {
     // Helper to determine if model uses max_completion_tokens (o-series models)
     const usesCompletionTokens = (model) => model.startsWith('o');
     
-    // Helper for model-specific timeout (grok models can be slow)
-    const getModelTimeout = (model) => model.includes('grok') ? 60000 : 30000;
+    // Helper to detect xAI models (like grok)
+    const isXaiModel = (model) => model.includes('grok');
+    
+    // Helper for model-specific timeout (xAI/grok models need much longer timeouts)
+    const getModelTimeout = (model) => isXaiModel(model) ? 120000 : 30000;
     
     // Call each council member (model) in parallel
     const memberPromises = selectedMembers.map(async (modelId) => {
@@ -159,18 +162,23 @@ module.exports = async function (context, req) {
         return {
           id: modelId,
           name: modelId.toUpperCase(),
-          provider: 'Azure OpenAI',
+          provider: isXaiModel(modelId) ? 'xAI via Azure' : 'Azure OpenAI',
           color: getModelColor(modelId),
           summary: content || `No response content from ${modelId}`
         };
       } catch (error) {
         context.log('Error calling model', modelId, error);
+        const isTimeout = error.message?.includes('timed out');
+        const errorMessage = isTimeout 
+          ? `Model ${modelId} timed out. This model may be slow or overloaded. Try again later.`
+          : `Error: Unable to get response from ${modelId}. ${error.message}`;
         return {
           id: modelId,
           name: modelId.toUpperCase(),
-          provider: 'Azure OpenAI',
+          provider: isXaiModel(modelId) ? 'xAI via Azure' : 'Azure OpenAI',
           color: getModelColor(modelId),
-          summary: `Error: Unable to get response from ${modelId}. ${error.message}`
+          summary: errorMessage,
+          error: true
         };
       }
     });
