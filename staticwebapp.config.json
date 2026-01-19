@@ -20,5 +20,8 @@
   },
   "globalHeaders": {
     "Cache-Control": "no-cache, no-store, must-revalidate"
+  },
+  "platform": {
+    "apiRuntime": "node:20"
   }
 }
