@@ -61,6 +61,8 @@ module.exports = async function (context, req) {
   const hasApiKeys = !!(process.env.AZURE_OPENAI_API_KEY && process.env.AZURE_OPENAI_ENDPOINT);
   const shouldUseMock = useMock || !hasApiKeys;
   
+  context.log('Council API - useMock:', useMock, 'hasApiKeys:', hasApiKeys, 'shouldUseMock:', shouldUseMock);
+  
   const { question, selectedMembers = ['gpt-4.1', 'o4-mini', 'grok-4-fast-reasoning'], chairmanModel = 'gpt-4.1' } = req.body || {};
 
   if (!question) {
