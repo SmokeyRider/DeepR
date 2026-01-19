@@ -7,10 +7,11 @@ import { DxORoleSelector } from './DxORoleSelector';
 import { SaveShareButtons } from './SaveShareButtons';
 
 const defaultRoles = [
-  { id: 'lead', name: 'Lead Researcher', model: 'gpt-5.1', focus: 'Primary analysis and synthesis', instructions: 'Conduct thorough research analysis, identify key findings and patterns.' },
-  { id: 'reviewer', name: 'Critical Reviewer', model: 'gpt-4.1', focus: 'Identify gaps and weaknesses', instructions: 'Critically evaluate the research, identify methodological issues and limitations.' },
-  { id: 'expert', name: 'Domain Expert', model: 'o3-mini', focus: 'Deep domain knowledge', instructions: 'Provide specialized expertise and context from the relevant field.' },
-  { id: 'analyst', name: 'Data Analyst', model: 'gpt-5', focus: 'Quantitative reasoning', instructions: 'Focus on data, statistics, and quantitative aspects of the problem.' },
+  { id: 'lead', name: 'Lead Researcher', model: 'gpt-4.1', focus: 'Primary analysis and synthesis', instructions: 'Conduct thorough research analysis, identify key findings and patterns.' },
+  { id: 'reviewer', name: 'Critical Reviewer', model: 'grok-4-fast-reasoning', focus: 'Fast critical reasoning', instructions: 'Quickly identify methodological issues, gaps, and alternative perspectives.' },
+  { id: 'expert', name: 'Domain Expert', model: 'o4-mini', focus: 'Specialized domain knowledge', instructions: 'Provide specialized expertise and context from the relevant field with efficient processing.' },
+  { id: 'analyst', name: 'Data Analyst', model: 'gpt-4.1', focus: 'Quantitative analysis', instructions: 'Focus on data, statistics, and quantitative aspects of the problem.' },
+  { id: 'strategist', name: 'Strategic Advisor', model: 'grok-4-fast-reasoning', focus: 'Strategic implications', instructions: 'Analyze strategic implications, long-term consequences, and implementation considerations.' },
 ];
 
 export function DxOView() {

@@ -1,7 +1,7 @@
 module.exports = async function (context, req) {
   context.log('Adversarial stream endpoint called');
 
-  const { question, supportModel = 'gpt-4o', opposeModel = 'o3', judgeModel = 'gpt-5.1' } = req.body || {};
+  const { question, supportModel = 'grok-4-fast-reasoning', opposeModel = 'grok-4-fast-reasoning', judgeModel = 'grok-4-fast-reasoning' } = req.body || {};
 
   if (!question) {
     context.res = {

@@ -7,21 +7,21 @@ const defaultRoles = [
   { 
     id: 'advocate', 
     name: 'Advocate', 
-    model: 'gpt-5.1', 
+    model: 'grok-4-fast-reasoning', 
     focus: 'Present strongest supporting case',
     instructions: 'Provide your strongest, clearest supporting position. Present structured arguments with evidence, benefits, and strategic rationale. Take a firm affirmative stance with concrete supporting evidence.'
   },
   { 
     id: 'challenger', 
     name: 'Challenger', 
-    model: 'gpt-5.1', 
+    model: 'grok-4-fast-reasoning', 
     focus: 'Critical analysis and counterarguments',
     instructions: 'Rigorously critique the Advocate\'s argument. Identify logical flaws, questionable assumptions, missing context, hidden risks, and alternative approaches. Be thorough and uncompromising in your analysis.'
   },
   { 
     id: 'arbiter', 
     name: 'Arbiter', 
-    model: 'gpt-5.1', 
+    model: 'grok-4-fast-reasoning', 
     focus: 'Synthesis and balanced judgment',
     instructions: 'Evaluate both perspectives objectively. Identify the strongest points from each side, synthesize a balanced conclusion, and provide actionable recommendations that account for both opportunities and risks.'
   },
