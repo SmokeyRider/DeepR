@@ -1,15 +1,31 @@
 import { useState } from 'react';
 import { Send, Sparkles, RotateCcw } from 'lucide-react';
 
-const quickPrompts = [
-  { label: 'Web Frameworks', prompt: 'What are the pros and cons of different web frameworks for building a scalable SaaS application?' },
-  { label: 'API Security', prompt: 'What are the best practices for securing REST APIs in a microservices architecture?' },
-  { label: 'Architecture', prompt: 'What are the pros and cons of different database architectures for a high-traffic e-commerce platform?' },
-  { label: 'AI Strategy', prompt: 'How should a mid-size company approach implementing AI/ML capabilities?' },
-];
+const quickPrompts = {
+  council: [
+    { label: 'Web Frameworks', prompt: 'What are the pros and cons of different web frameworks for building a scalable SaaS application?' },
+    { label: 'API Security', prompt: 'What are the best practices for securing REST APIs in a microservices architecture?' },
+    { label: 'Architecture', prompt: 'What are the pros and cons of different database architectures for a high-traffic e-commerce platform?' },
+    { label: 'AI Strategy', prompt: 'How should a mid-size company approach implementing AI/ML capabilities?' },
+  ],
+  dxo: [
+    { label: 'Tech Stack', prompt: 'Should our startup choose React or Vue.js for our web application frontend?' },
+    { label: 'Cloud Migration', prompt: 'Should we migrate our legacy application to AWS, Azure, or Google Cloud?' },
+    { label: 'Hiring Decision', prompt: 'Should we hire senior developers or train junior developers for our growing team?' },
+    { label: 'Product Strategy', prompt: 'Should we focus on adding new features or improving existing functionality?' },
+  ],
+  adversarial: [
+    { label: 'Remote Work', prompt: 'Should companies mandate a return to office or continue supporting remote work?' },
+    { label: 'AI Regulation', prompt: 'Should governments implement strict regulations on AI development and deployment?' },
+    { label: 'Open Source', prompt: 'Should companies open-source their core technology to gain competitive advantage?' },
+    { label: 'Data Privacy', prompt: 'Should user data collection be completely transparent even if it reduces service quality?' },
+  ]
+};
 
-export function QuestionInput({ onSubmit, isLoading, onReset, hasResults }) {
+export function QuestionInput({ onSubmit, isLoading, onReset, hasResults, mode = 'council' }) {
   const [question, setQuestion] = useState('');
+  
+  const currentPrompts = quickPrompts[mode] || quickPrompts.council;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -45,7 +61,7 @@ export function QuestionInput({ onSubmit, isLoading, onReset, hasResults }) {
 
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <span className="text-sm text-deepr-text-muted">Quick prompts:</span>
-          {quickPrompts.map((item) => (
+          {currentPrompts.map((item) => (
             <button
               key={item.label}
               type="button"

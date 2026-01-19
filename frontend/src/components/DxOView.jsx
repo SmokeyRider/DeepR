@@ -147,6 +147,7 @@ export function DxOView() {
         isLoading={isLoading}
         onReset={handleReset}
         hasResults={!!results}
+        mode="dxo"
       />
 
       {/* Role Selector (shown when no results) */}

@@ -89,6 +89,7 @@ export function CouncilView() {
         isLoading={isLoading}
         onReset={handleReset}
         hasResults={!!results}
+        mode="council"
       />
 
       {/* Member Selector (shown when no results) */}

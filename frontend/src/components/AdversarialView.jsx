@@ -8,22 +8,22 @@ const defaultRoles = [
     id: 'advocate', 
     name: 'Advocate', 
     model: 'gpt-5.1', 
-    focus: 'Strong initial opinion',
-    instructions: 'Provide your strongest, clearest opinion. Take a firm stance. Do not hedge. Present your reasoning in a structured way.'
+    focus: 'Present strongest supporting case',
+    instructions: 'Provide your strongest, clearest supporting position. Present structured arguments with evidence, benefits, and strategic rationale. Take a firm affirmative stance with concrete supporting evidence.'
   },
   { 
     id: 'challenger', 
     name: 'Challenger', 
     model: 'gpt-5.1', 
-    focus: 'Critique and attack reasoning',
-    instructions: 'Critique the Advocate\'s argument. Identify logical flaws, missing evidence, weak assumptions, and alternative interpretations. Be adversarial, rigorous, and unsparing.'
+    focus: 'Critical analysis and counterarguments',
+    instructions: 'Rigorously critique the Advocate\'s argument. Identify logical flaws, questionable assumptions, missing context, hidden risks, and alternative approaches. Be thorough and uncompromising in your analysis.'
   },
   { 
     id: 'arbiter', 
     name: 'Arbiter', 
     model: 'gpt-5.1', 
-    focus: 'Evaluate and synthesize',
-    instructions: 'Evaluate both the Advocate\'s argument and the Challenger\'s critique. Identify which points hold up and synthesize the strongest possible final position.'
+    focus: 'Synthesis and balanced judgment',
+    instructions: 'Evaluate both perspectives objectively. Identify the strongest points from each side, synthesize a balanced conclusion, and provide actionable recommendations that account for both opportunities and risks.'
   },
 ];
 
@@ -379,10 +379,31 @@ export function AdversarialView() {
           <textarea
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Enter a topic or question for adversarial debate..."
+            placeholder="Enter a topic or question for adversarial debate... e.g., 'Should companies mandate a return to office or continue supporting remote work?'"
             className="textarea-field h-32 mb-4"
             disabled={isLoading}
           />
+          
+          {/* Sample prompts for adversarial debates */}
+          <div className="mb-4 flex flex-wrap items-center gap-3">
+            <span className="text-sm text-deepr-text-muted">Sample debates:</span>
+            {[
+              { label: 'Remote Work', prompt: 'Should companies mandate a return to office or continue supporting remote work?' },
+              { label: 'AI Regulation', prompt: 'Should governments implement strict regulations on AI development and deployment?' },
+              { label: 'Open Source', prompt: 'Should companies open-source their core technology to gain competitive advantage?' },
+              { label: 'Data Privacy', prompt: 'Should user data collection be completely transparent even if it reduces service quality?' },
+            ].map((item) => (
+              <button
+                key={item.label}
+                type="button"
+                onClick={() => setInputValue(item.prompt)}
+                className="btn-secondary text-sm px-3 py-1.5"
+                disabled={isLoading}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
           
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end justify-between">
             <div className="w-full sm:w-auto">
