@@ -1,12 +1,7 @@
 import OpenAI from 'openai';
-import Anthropic from '@anthropic-ai/sdk';
-import { GoogleGenAI } from '@google/genai';
 import { config } from './config.js';
 
 let openaiClient = null;
-let anthropicClient = null;
-let geminiClient = null;
-let openrouterClient = null;
 
 const getOpenAIClient = () => {
   if (!openaiClient && config.providers.openai.apiKey && config.providers.openai.baseURL) {
@@ -18,42 +13,9 @@ const getOpenAIClient = () => {
   return openaiClient;
 };
 
-const getAnthropicClient = () => {
-  if (!anthropicClient && config.providers.anthropic.apiKey && config.providers.anthropic.baseURL) {
-    anthropicClient = new Anthropic({
-      apiKey: config.providers.anthropic.apiKey,
-      baseURL: config.providers.anthropic.baseURL,
-    });
-  }
-  return anthropicClient;
-};
-
-const getGeminiClient = () => {
-  if (!geminiClient && config.providers.gemini.apiKey && config.providers.gemini.baseURL) {
-    geminiClient = new GoogleGenAI({
-      apiKey: config.providers.gemini.apiKey,
-      httpOptions: {
-        apiVersion: '',
-        baseUrl: config.providers.gemini.baseURL,
-      },
-    });
-  }
-  return geminiClient;
-};
-
-const getOpenRouterClient = () => {
-  if (!openrouterClient && config.providers.openrouter.apiKey && config.providers.openrouter.baseURL) {
-    openrouterClient = new OpenAI({
-      apiKey: config.providers.openrouter.apiKey,
-      baseURL: config.providers.openrouter.baseURL,
-    });
-  }
-  return openrouterClient;
-};
-
 const getProviderForModel = (modelId) => {
-  const model = config.availableModels.find(m => m.id === modelId);
-  return model?.providerKey || 'openai';
+  // All models are now OpenAI models in Azure migration
+  return 'openai';
 };
 
 const getCouncilMemberPrompt = (question, memberConfig) => {
@@ -240,127 +202,20 @@ const callOpenAI = async (prompt, model, context = '', maxTokens = 8192) => {
   }
 };
 
-const callAnthropic = async (prompt, model, context = '', maxTokens = 8192) => {
-  const client = getAnthropicClient();
-  if (!client) {
-    throw new Error('Anthropic client not configured - check AI_INTEGRATIONS_ANTHROPIC_API_KEY');
-  }
-  console.log(`[Anthropic${context}] Sending request to model: ${model}, prompt length: ${prompt.length} chars, max_tokens: ${maxTokens}`);
-  const startTime = Date.now();
-  
-  try {
-    const message = await client.messages.create({
-      model,
-      max_tokens: maxTokens,
-      messages: [{ role: 'user', content: prompt }],
-    });
-    
-    const elapsed = Date.now() - startTime;
-    const content = message.content[0];
-    const text = content?.type === 'text' ? content.text : '';
-    
-    console.log(`[Anthropic${context}] Response received in ${elapsed}ms, stop_reason: ${message.stop_reason}, content length: ${text.length} chars`);
-    
-    if (!text) {
-      console.warn(`[Anthropic${context}] WARNING: Empty content received. Full response:`, JSON.stringify(message, null, 2));
-    }
-    
-    return text;
-  } catch (error) {
-    console.error(`[Anthropic${context}] API Error:`, error.message, error.status || '', error.code || '');
-    throw error;
-  }
-};
-
-const callGemini = async (prompt, model, context = '') => {
-  const client = getGeminiClient();
-  if (!client) {
-    throw new Error('Gemini client not configured - check AI_INTEGRATIONS_GEMINI_API_KEY');
-  }
-  console.log(`[Gemini${context}] Sending request to model: ${model}, prompt length: ${prompt.length} chars`);
-  const startTime = Date.now();
-  
-  try {
-    const response = await client.models.generateContent({
-      model,
-      contents: prompt,
-    });
-    
-    const elapsed = Date.now() - startTime;
-    const text = response.text || '';
-    
-    console.log(`[Gemini${context}] Response received in ${elapsed}ms, content length: ${text.length} chars`);
-    
-    if (!text) {
-      console.warn(`[Gemini${context}] WARNING: Empty content received. Full response:`, JSON.stringify(response, null, 2));
-    }
-    
-    return text;
-  } catch (error) {
-    console.error(`[Gemini${context}] API Error:`, error.message, error.status || '', error.code || '');
-    throw error;
-  }
-};
-
-const callOpenRouter = async (prompt, model, context = '', maxTokens = 8192) => {
-  const client = getOpenRouterClient();
-  if (!client) {
-    throw new Error('OpenRouter client not configured - check AI_INTEGRATIONS_OPENROUTER_API_KEY');
-  }
-  console.log(`[OpenRouter${context}] Sending request to model: ${model}, prompt length: ${prompt.length} chars, max_tokens: ${maxTokens}`);
-  const startTime = Date.now();
-  
-  try {
-    const response = await client.chat.completions.create({
-      model,
-      messages: [{ role: 'user', content: prompt }],
-      max_tokens: maxTokens,
-    });
-    
-    const elapsed = Date.now() - startTime;
-    const content = response.choices?.[0]?.message?.content || '';
-    const finishReason = response.choices?.[0]?.finish_reason || 'unknown';
-    
-    console.log(`[OpenRouter${context}] Response received in ${elapsed}ms, finish_reason: ${finishReason}, content length: ${content.length} chars`);
-    
-    if (!content) {
-      console.warn(`[OpenRouter${context}] WARNING: Empty content received. Full response:`, JSON.stringify(response, null, 2));
-    }
-    
-    return content;
-  } catch (error) {
-    console.error(`[OpenRouter${context}] API Error:`, error.message, error.status || '', error.code || '');
-    throw error;
-  }
-};
+// All models now use OpenAI client in Azure migration
 
 export const callLLM = async (prompt, model = config.defaultModel, options = {}) => {
   const { context = '', maxRetries = 0, maxTokens = 8192 } = options;
-  const provider = getProviderForModel(model);
   const contextLabel = context ? `:${context}` : '';
   
-  console.log(`[LLM${contextLabel}] Calling model: ${model} (provider: ${provider}), maxTokens: ${maxTokens}`);
+  console.log(`[Azure OpenAI${contextLabel}] Calling model: ${model}, maxTokens: ${maxTokens}`);
 
   const attemptCall = async (attempt) => {
     const attemptLabel = maxRetries > 0 ? ` (attempt ${attempt + 1}/${maxRetries + 1})` : '';
     
     try {
-      let content;
-      switch (provider) {
-        case 'anthropic':
-          content = await callAnthropic(prompt, model, contextLabel + attemptLabel, maxTokens);
-          break;
-        case 'gemini':
-          content = await callGemini(prompt, model, contextLabel + attemptLabel);
-          break;
-        case 'openrouter':
-          content = await callOpenRouter(prompt, model, contextLabel + attemptLabel, maxTokens);
-          break;
-        case 'openai':
-        default:
-          content = await callOpenAI(prompt, model, contextLabel + attemptLabel, maxTokens);
-          break;
-      }
+      // All models now use OpenAI client (Azure OpenAI Service)
+      const content = await callOpenAI(prompt, model, contextLabel + attemptLabel, maxTokens);
 
       if (!content || content.trim().length === 0) {
         const error = new Error(`Empty response from ${model}`);
@@ -368,10 +223,10 @@ export const callLLM = async (prompt, model = config.defaultModel, options = {})
         throw error;
       }
 
-      console.log(`[LLM${contextLabel}] Success from ${model}: ${content.substring(0, 80)}...`);
+      console.log(`[Azure OpenAI${contextLabel}] Success from ${model}: ${content.substring(0, 80)}...`);
       return content;
     } catch (error) {
-      console.error(`[LLM${contextLabel}] Error from ${model}${attemptLabel}:`, error.message);
+      console.error(`[Azure OpenAI${contextLabel}] Error from ${model}${attemptLabel}:`, error.message);
       throw error;
     }
   };
