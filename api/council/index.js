@@ -58,6 +58,9 @@ module.exports = async function (context, req) {
 
   // Check if we should use mock mode or real Azure OpenAI
   const useMock = process.env.USE_MOCK === 'true';
+  const hasApiKeys = !!(process.env.AZURE_OPENAI_API_KEY && process.env.AZURE_OPENAI_ENDPOINT);
+  const shouldUseMock = useMock || !hasApiKeys;
+  
   const { question, selectedMembers = ['gpt-4.1', 'o4-mini', 'grok-4-fast-reasoning'], chairmanModel = 'gpt-4.1' } = req.body || {};
 
   if (!question) {
@@ -69,13 +72,13 @@ module.exports = async function (context, req) {
   }
 
   try {
-    // Mock mode or no API keys - return simulated response
-    if (useMock || !getOpenAIClient()) {
+    // Always use mock mode for now since we don't have API keys configured
+    if (shouldUseMock) {
       const mockMembers = selectedMembers.map(id => ({
         id,
         name: id.toUpperCase(),
         provider: 'Azure OpenAI',
-        color: '#10B981'
+        color: getModelColor(id)
       }));
 
       const mockResponse = getMockCouncilResponse(question, mockMembers);
@@ -84,7 +87,9 @@ module.exports = async function (context, req) {
         status: 200,
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type'
         },
         body: {
           success: true,
