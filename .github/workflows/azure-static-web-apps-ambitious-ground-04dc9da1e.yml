@@ -26,14 +26,6 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '20.x'
-          cache: 'npm'
-          cache-dependency-path: |
-            frontend/package-lock.json
-            package-lock.json
-      - name: Install frontend dependencies
-        run: |
-          cd frontend
-          npm ci
       - name: Install OIDC Client from Core Package
         run: npm install @actions/core@1.6.0 @actions/http-client
       - name: Get Id Token
@@ -61,7 +53,6 @@ jobs:
           api_location: "/api" # Api source code path - optional
           output_location: "dist" # Built app content directory - optional
           github_id_token: ${{ steps.idtoken.outputs.result }}
-          app_build_command: "npm ci && npm run build"
           ###### End of Repository/Build Configurations ######
         env:
           USE_MOCK: ${{ vars.USE_MOCK || 'true' }}
