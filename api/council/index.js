@@ -58,7 +58,7 @@ module.exports = async function (context, req) {
 
   // Check if we should use mock mode or real Azure OpenAI
   const useMock = process.env.USE_MOCK === 'true';
-  const { question, selectedMemberIds = ['gpt-4.1', 'o4-mini', 'grok-4-fast-reasoning'], chairmanModelId = 'gpt-4.1' } = req.body || {};
+  const { question, selectedMembers = ['gpt-4.1', 'o4-mini', 'grok-4-fast-reasoning'], chairmanModel = 'gpt-4.1' } = req.body || {};
 
   if (!question) {
     context.res = {
@@ -71,14 +71,14 @@ module.exports = async function (context, req) {
   try {
     // Mock mode or no API keys - return simulated response
     if (useMock || !getOpenAIClient()) {
-      const mockMembers = selectedMemberIds.map(id => ({
+      const mockMembers = selectedMembers.map(id => ({
         id,
         name: id.toUpperCase(),
         provider: 'Azure OpenAI',
         color: '#10B981'
       }));
 
-      const response = getMockCouncilResponse(question, mockMembers);
+      const mockResponse = getMockCouncilResponse(question, mockMembers);
       
       context.res = {
         status: 200,
@@ -86,7 +86,12 @@ module.exports = async function (context, req) {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*'
         },
-        body: response
+        body: {
+          success: true,
+          mode: 'mock',
+          question,
+          data: mockResponse
+        }
       };
       return;
     }
@@ -96,7 +101,7 @@ module.exports = async function (context, req) {
     const members = [];
     
     // Call each council member (model) in parallel
-    const memberPromises = selectedMemberIds.map(async (modelId) => {
+    const memberPromises = selectedMembers.map(async (modelId) => {
       try {
         const completion = await client.chat.completions.create({
           model: modelId,
@@ -139,7 +144,7 @@ module.exports = async function (context, req) {
     let chairmanSummary = "Council analysis complete.";
     try {
       const summaryCompletion = await client.chat.completions.create({
-        model: chairmanModelId,
+        model: chairmanModel,
         messages: [
           {
             role: 'system',
@@ -159,14 +164,14 @@ module.exports = async function (context, req) {
       chairmanSummary = "Unable to generate chairman summary. Please review individual member responses.";
     }
 
-    const response = {
+    const responseData = {
       question,
       members: memberResults,
       chairman: {
-        id: chairmanModelId,
-        name: `${chairmanModelId.toUpperCase()} (Chairman)`,
+        id: chairmanModel,
+        name: `${chairmanModel.toUpperCase()} (Chairman)`,
         provider: 'Azure OpenAI',
-        color: getModelColor(chairmanModelId),
+        color: getModelColor(chairmanModel),
         summary: chairmanSummary
       },
       timestamp: new Date().toISOString(),
@@ -181,7 +186,12 @@ module.exports = async function (context, req) {
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type'
       },
-      body: response
+      body: {
+        success: true,
+        mode: 'live',
+        question,
+        data: responseData
+      }
     };
       body: { message: 'Real Azure OpenAI integration coming in Phase 3' }
     };

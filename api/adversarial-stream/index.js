@@ -29,7 +29,7 @@ module.exports = async function (context, req) {
     }
   ];
 
-  // For Azure Functions, we'll return the complete response rather than streaming
+  // For Azure Functions, we'll return the complete response in Express backend compatible format
   // Real streaming would require Server-Sent Events setup
   context.res = {
     status: 200,
@@ -40,14 +40,19 @@ module.exports = async function (context, req) {
       'Access-Control-Allow-Headers': 'Content-Type'
     },
     body: {
+      success: true,
+      mode: 'mock',
       question,
-      supportModel,
-      opposeModel, 
-      judgeModel,
-      debate: mockStreamData,
-      status: 'Adversarial debate analysis complete',
-      methodology: 'Three-stage adversarial reasoning: Advocate → Challenger → Arbiter',
-      environment: 'Azure Functions (Mock Mode)'
+      data: {
+        question,
+        supportModel,
+        opposeModel, 
+        judgeModel,
+        debate: mockStreamData,
+        status: 'Adversarial debate analysis complete',
+        methodology: 'Three-stage adversarial reasoning: Advocate → Challenger → Arbiter',
+        environment: 'Azure Functions (Mock Mode)'
+      }
     }
   };
 }

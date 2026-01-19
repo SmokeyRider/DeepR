@@ -1,5 +1,5 @@
 module.exports = async function (context, req) {
-  context.log('DxO endpoint called');
+  context.log('DxO stream endpoint called');
 
   const { question, roles = [] } = req.body || {};
 
@@ -11,7 +11,8 @@ module.exports = async function (context, req) {
     return;
   }
 
-  // Mock DxO response for Azure Functions testing
+  // For now, simulate streaming by returning structured data that matches original Express backend
+  // The frontend will handle this as if it was streamed
   const mockResponse = {
     question,
     roles: roles.map((role, index) => ({
@@ -27,6 +28,7 @@ module.exports = async function (context, req) {
     summary: `## DxO Framework Summary\n\nThe Decision by Expert Opinion (DxO) framework has analyzed "${question.substring(0, 80)}..." through multiple expert perspectives.\n\n**Key Findings**:\n- All expert roles provided mock analyses\n- Azure Functions deployment is working\n- Frontend integration successful\n\n**Overall Confidence**: 88%\n\n*Framework: DxO Sequential Analysis (Mock Mode)*`
   };
 
+  // Return in Express backend compatible format
   context.res = {
     status: 200,
     headers: {
