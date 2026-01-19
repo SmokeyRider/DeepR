@@ -1,4 +1,4 @@
-export default async function (context, req) {
+module.exports = async function (context, req) {
   context.log('Adversarial stream endpoint called');
 
   const { question, supportModel = 'gpt-4o', opposeModel = 'o3', judgeModel = 'gpt-5.1' } = req.body || {};

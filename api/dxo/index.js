@@ -1,4 +1,4 @@
-export default async function (context, req) {
+module.exports = async function (context, req) {
   context.log('DxO endpoint called');
 
   const { question, roles = [] } = req.body || {};

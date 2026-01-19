@@ -1,4 +1,4 @@
-export default async function (context, req) {
+module.exports = async function (context, req) {
   context.log('Health check endpoint called');
 
   const useMock = process.env.USE_MOCK === 'true';

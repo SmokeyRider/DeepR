@@ -14,7 +14,7 @@ const availableModels = [
   { id: 'gpt-4', name: 'GPT-4', provider: 'Azure OpenAI', providerKey: 'openai', description: 'Standard GPT-4 model', color: '#84CC16' },
 ];
 
-export default async function (context, req) {
+module.exports = async function (context, req) {
   context.log('Config endpoint called');
 
   context.res = {

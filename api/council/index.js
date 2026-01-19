@@ -38,7 +38,7 @@ const getOpenAIClient = () => {
   });
 };
 
-export default async function (context, req) {
+module.exports = async function (context, req) {
   context.log('Council endpoint called');
 
   const useMock = process.env.USE_MOCK === 'true';

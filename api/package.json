@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "Azure Functions API for DeepR",
   "main": "index.js",
-  "type": "module",
   "scripts": {
     "start": "func start",
     "test": "echo \"No tests specified\""
