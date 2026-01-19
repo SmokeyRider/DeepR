@@ -74,6 +74,8 @@ jobs:
           USE_MOCK: ${{ vars.USE_MOCK || 'true' }}
           LOG_LEVEL: ${{ vars.LOG_LEVEL || 'info' }}
           NODE_ENV: ${{ vars.NODE_ENV || 'production' }}
+          AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
+          AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
