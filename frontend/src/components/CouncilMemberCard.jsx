@@ -75,9 +75,13 @@ export function CouncilMemberCard({ member, isLoading, delay = 0 }) {
 
       {/* Summary */}
       <div className="mb-4">
-        <p className="text-deepr-text leading-relaxed">
-          {member.summary || <span className="italic text-deepr-text-muted">No summary available</span>}
-        </p>
+        {member.summary ? (
+          <div className="text-deepr-text leading-relaxed prose prose-invert prose-sm max-w-none">
+            <MarkdownRenderer content={member.summary} />
+          </div>
+        ) : (
+          <p className="italic text-deepr-text-muted">No summary available</p>
+        )}
       </div>
 
       {/* Expandable Reasoning */}

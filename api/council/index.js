@@ -108,6 +108,9 @@ module.exports = async function (context, req) {
     // Helper to determine if model uses max_completion_tokens (o-series models)
     const usesCompletionTokens = (model) => model.startsWith('o');
     
+    // Helper for model-specific timeout (grok models can be slow)
+    const getModelTimeout = (model) => model.includes('grok') ? 60000 : 30000;
+    
     // Call each council member (model) in parallel
     const memberPromises = selectedMembers.map(async (modelId) => {
       try {
@@ -133,14 +136,32 @@ module.exports = async function (context, req) {
           requestParams.max_tokens = 500;
         }
         
-        const completion = await client.chat.completions.create(requestParams);
+        // Add timeout for the request
+        const timeoutMs = getModelTimeout(modelId);
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error(`Request timed out after ${timeoutMs/1000}s`)), timeoutMs)
+        );
+        
+        const completion = await Promise.race([
+          client.chat.completions.create(requestParams),
+          timeoutPromise
+        ]);
+        
+        // Extract content - handle different response formats
+        let content = null;
+        if (completion.choices && completion.choices[0]) {
+          const choice = completion.choices[0];
+          content = choice.message?.content || choice.text || null;
+        }
+        
+        context.log(`Model ${modelId} response:`, content ? `${content.substring(0, 100)}...` : 'No content');
 
         return {
           id: modelId,
           name: modelId.toUpperCase(),
           provider: 'Azure OpenAI',
           color: getModelColor(modelId),
-          summary: completion.choices[0].message.content
+          summary: content || `No response content from ${modelId}`
         };
       } catch (error) {
         context.log('Error calling model', modelId, error);
