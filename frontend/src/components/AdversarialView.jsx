@@ -7,21 +7,21 @@ const defaultRoles = [
   { 
     id: 'advocate', 
     name: 'Advocate', 
-    model: 'grok-4-fast-reasoning', 
+    model: 'gpt-4.1', 
     focus: 'Present strongest supporting case',
     instructions: 'Provide your strongest, clearest supporting position. Present structured arguments with evidence, benefits, and strategic rationale. Take a firm affirmative stance with concrete supporting evidence.'
   },
   { 
     id: 'challenger', 
     name: 'Challenger', 
-    model: 'grok-4-fast-reasoning', 
+    model: 'o4-mini', 
     focus: 'Critical analysis and counterarguments',
     instructions: 'Rigorously critique the Advocate\'s argument. Identify logical flaws, questionable assumptions, missing context, hidden risks, and alternative approaches. Be thorough and uncompromising in your analysis.'
   },
   { 
     id: 'arbiter', 
     name: 'Arbiter', 
-    model: 'grok-4-fast-reasoning', 
+    model: 'gpt-4.1', 
     focus: 'Synthesis and balanced judgment',
     instructions: 'Evaluate both perspectives objectively. Identify the strongest points from each side, synthesize a balanced conclusion, and provide actionable recommendations that account for both opportunities and risks.'
   },
@@ -123,7 +123,7 @@ function AdversarialRoleSelector({ roles, onRolesChange }) {
                 >
                   {availableModels.map((model) => (
                     <option key={model.id} value={model.id}>
-                      {model.name} - {model.description}
+                      {model.name} - {model.description}{model.slow ? ' ⚠️' : ''}
                     </option>
                   ))}
                 </select>

@@ -125,7 +125,7 @@ export function DxORoleSelector({ roles, onRolesChange }) {
                   >
                     {availableModels.map((model) => (
                       <option key={model.id} value={model.id}>
-                        {model.name} - {model.description}
+                        {model.name} - {model.description}{model.slow ? ' ⚠️' : ''}
                       </option>
                     ))}
                   </select>

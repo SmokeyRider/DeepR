@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { CheckSquare, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { CheckSquare, Loader2, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
 
 const defaultSelectedMembers = ['gpt-4.1', 'o4-mini'];
-const defaultChairman = 'grok-4-fast-reasoning';
+const defaultChairman = 'gpt-4.1'; // Using a reliable model as default chairman
 
 export function CouncilMemberSelector({ selectedMembers, onSelectionChange, chairmanModel, onChairmanChange }) {
   const [availableModels, setAvailableModels] = useState([]);
@@ -57,7 +57,8 @@ export function CouncilMemberSelector({ selectedMembers, onSelectionChange, chai
   }, {});
 
   const providerLabels = {
-    openai: { name: 'OpenAI', icon: '🤖', color: '#10B981' },
+    openai: { name: 'Azure OpenAI', icon: '🤖', color: '#10B981' },
+    xai: { name: 'xAI via Azure', icon: '⚡', color: '#06B6D4' },
     anthropic: { name: 'Anthropic', icon: '🧠', color: '#EA580C' },
     gemini: { name: 'Google Gemini', icon: '✨', color: '#4285F4' },
     openrouter: { name: 'OpenRouter (300+ Models)', icon: '🌐', color: '#7C3AED' },
@@ -121,16 +122,21 @@ export function CouncilMemberSelector({ selectedMembers, onSelectionChange, chai
                     {models.map((model) => {
                       const isSelected = selectedMembers.includes(model.id);
                       const color = model.color || '#6B7280';
+                      const isSlow = model.slow === true;
+                      const isDeployed = model.deployed !== false; // Default to deployed if not specified
                       
                       return (
                         <button
                           key={model.id}
-                          onClick={() => toggleMember(model.id)}
+                          onClick={() => isDeployed && toggleMember(model.id)}
+                          disabled={!isDeployed}
                           className={`
                             relative p-3 rounded-lg border text-left transition-all duration-200
-                            ${isSelected 
-                              ? 'border-2 bg-opacity-10' 
-                              : 'border-deepr-border bg-deepr-card hover:border-deepr-border/80 hover:bg-deepr-hover'
+                            ${!isDeployed 
+                              ? 'opacity-50 cursor-not-allowed border-deepr-border bg-deepr-card/50'
+                              : isSelected 
+                                ? 'border-2 bg-opacity-10' 
+                                : 'border-deepr-border bg-deepr-card hover:border-deepr-border/80 hover:bg-deepr-hover'
                             }
                           `}
                           style={{ 
@@ -149,7 +155,17 @@ export function CouncilMemberSelector({ selectedMembers, onSelectionChange, chai
                               {isSelected && <CheckSquare className="w-3 h-3 text-white" />}
                             </div>
                             <div className="min-w-0 flex-1">
-                              <div className="font-medium text-deepr-text text-sm truncate">{model.name}</div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-medium text-deepr-text text-sm truncate">{model.name}</span>
+                                {isSlow && (
+                                  <span title="This model may be slow to respond" className="text-amber-500">
+                                    <AlertTriangle className="w-3.5 h-3.5" />
+                                  </span>
+                                )}
+                                {!isDeployed && (
+                                  <span className="text-xs text-deepr-text-muted">(not deployed)</span>
+                                )}
+                              </div>
                               <div className="text-xs text-deepr-text-muted truncate">{model.description}</div>
                             </div>
                           </div>
@@ -179,9 +195,9 @@ export function CouncilMemberSelector({ selectedMembers, onSelectionChange, chai
             const provider = providerLabels[providerKey] || { name: providerKey };
             return (
               <optgroup key={providerKey} label={`${provider.icon || ''} ${provider.name}`}>
-                {models.map((model) => (
+                {models.filter(m => m.deployed !== false).map((model) => (
                   <option key={model.id} value={model.id}>
-                    {model.name} - {model.description}
+                    {model.name} - {model.description}{model.slow ? ' ⚠️' : ''}
                   </option>
                 ))}
               </optgroup>
