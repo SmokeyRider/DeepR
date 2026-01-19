@@ -36,6 +36,15 @@ jobs:
                const coredemo = require('@actions/core')
                return await coredemo.getIDToken()
            result-encoding: string
+      - name: Debug Environment Variables
+        run: |
+          echo "=== DEBUGGING SECRETS ==="
+          echo "USE_MOCK value: ${{ vars.USE_MOCK || 'true' }}"
+          echo "AZURE_OPENAI_API_KEY exists: ${{ secrets.AZURE_OPENAI_API_KEY != '' }}"
+          echo "AZURE_OPENAI_ENDPOINT exists: ${{ secrets.AZURE_OPENAI_ENDPOINT != '' }}"
+          echo "AZURE_OPENAI_API_KEY length: ${{ length(secrets.AZURE_OPENAI_API_KEY) }}"
+          echo "AZURE_OPENAI_ENDPOINT length: ${{ length(secrets.AZURE_OPENAI_ENDPOINT) }}"
+          echo "=== END DEBUG ==="
       - name: Create Azure Functions local.settings.json
         run: |
           cat > api/local.settings.json << EOF
@@ -57,6 +66,24 @@ jobs:
           echo "USE_MOCK=${{ vars.USE_MOCK || 'true' }}" >> $GITHUB_ENV
           echo "LOG_LEVEL=${{ vars.LOG_LEVEL || 'info' }}" >> $GITHUB_ENV
           echo "NODE_ENV=${{ vars.NODE_ENV || 'production' }}" >> $GITHUB_ENV
+      - name: Debug - Check if secrets reach this step  
+        run: |
+          echo "=== SECRETS AVAILABILITY CHECK ==="
+          if [ -n "$AZURE_OPENAI_API_KEY" ]; then
+            echo "✅ AZURE_OPENAI_API_KEY is available to this step (length: ${#AZURE_OPENAI_API_KEY})"
+          else
+            echo "❌ AZURE_OPENAI_API_KEY is NOT available to this step"
+          fi
+          
+          if [ -n "$AZURE_OPENAI_ENDPOINT" ]; then
+            echo "✅ AZURE_OPENAI_ENDPOINT is available to this step (length: ${#AZURE_OPENAI_ENDPOINT})"  
+          else
+            echo "❌ AZURE_OPENAI_ENDPOINT is NOT available to this step"
+          fi
+          echo "=== END SECRETS CHECK ==="
+        env:
+          AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
+          AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
