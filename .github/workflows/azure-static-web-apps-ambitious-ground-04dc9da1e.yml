@@ -42,8 +42,6 @@ jobs:
           echo "USE_MOCK value: ${{ vars.USE_MOCK || 'true' }}"
           echo "AZURE_OPENAI_API_KEY exists: ${{ secrets.AZURE_OPENAI_API_KEY != '' }}"
           echo "AZURE_OPENAI_ENDPOINT exists: ${{ secrets.AZURE_OPENAI_ENDPOINT != '' }}"
-          echo "AZURE_OPENAI_API_KEY length: ${{ length(secrets.AZURE_OPENAI_API_KEY) }}"
-          echo "AZURE_OPENAI_ENDPOINT length: ${{ length(secrets.AZURE_OPENAI_ENDPOINT) }}"
           echo "=== END DEBUG ==="
       - name: Create Azure Functions local.settings.json
         run: |
