@@ -1,4 +1,4 @@
-const { OpenAI } = require('openai');
+const { AzureOpenAI } = require('openai');
 
 // Mock responses for testing without API keys
 const getMockCouncilResponse = (question, members) => {
@@ -37,19 +37,17 @@ const getModelColor = (modelId) => {
 
 const getOpenAIClient = () => {
   const apiKey = process.env.AZURE_OPENAI_API_KEY;
-  const baseURL = process.env.AZURE_OPENAI_ENDPOINT;
+  const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
 
-  if (!apiKey || !baseURL) {
+  if (!apiKey || !endpoint) {
     return null;
   }
 
-  return new OpenAI({
+  // Use AzureOpenAI client for Azure OpenAI Service
+  return new AzureOpenAI({
     apiKey,
-    baseURL: baseURL.endsWith('/') ? baseURL : `${baseURL}/`,
-    defaultQuery: { 'api-version': '2024-08-01-preview' },
-    defaultHeaders: {
-      'Content-Type': 'application/json'
-    }
+    endpoint: endpoint.replace(/\/$/, ''), // Remove trailing slash if present
+    apiVersion: '2024-08-01-preview'
   });
 };
 
