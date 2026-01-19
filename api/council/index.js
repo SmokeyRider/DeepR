@@ -1,4 +1,4 @@
-import OpenAI from 'openai';
+const { OpenAI } = require('openai');
 
 // Mock responses for testing without API keys
 const getMockCouncilResponse = (question, members) => {
@@ -24,9 +24,20 @@ const getMockCouncilResponse = (question, members) => {
   };
 };
 
+const getModelColor = (modelId) => {
+  const colorMap = {
+    'gpt-4.1': '#F97316',
+    'o4-mini': '#A855F7', 
+    'grok-4-fast-reasoning': '#06B6D4',
+    'gpt-4o': '#EC4899',
+    'o3': '#14B8A6'
+  };
+  return colorMap[modelId] || '#6B7280';
+};
+
 const getOpenAIClient = () => {
-  const apiKey = process.env.AZURE_OPENAI_API_KEY || process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
-  const baseURL = process.env.AZURE_OPENAI_ENDPOINT || process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
+  const apiKey = process.env.AZURE_OPENAI_API_KEY;
+  const baseURL = process.env.AZURE_OPENAI_ENDPOINT;
 
   if (!apiKey || !baseURL) {
     return null;
@@ -34,17 +45,20 @@ const getOpenAIClient = () => {
 
   return new OpenAI({
     apiKey,
-    baseURL
+    baseURL: baseURL.endsWith('/') ? baseURL : `${baseURL}/`,
+    defaultQuery: { 'api-version': '2024-08-01-preview' },
+    defaultHeaders: {
+      'Content-Type': 'application/json'
+    }
   });
 };
 
 module.exports = async function (context, req) {
   context.log('Council endpoint called');
 
-  // For development, hardcode USE_MOCK to true
-  // TODO: Make this configurable via environment variables later
-  const useMock = process.env.USE_MOCK === 'true' || true; // Always use mock for now
-  const { question, selectedMemberIds = ['gpt-5.1', 'gpt-4o', 'o3'], chairmanModelId = 'gpt-5.1' } = req.body || {};
+  // Check if we should use mock mode or real Azure OpenAI
+  const useMock = process.env.USE_MOCK === 'true';
+  const { question, selectedMemberIds = ['gpt-4.1', 'o4-mini', 'grok-4-fast-reasoning'], chairmanModelId = 'gpt-4.1' } = req.body || {};
 
   if (!question) {
     context.res = {
@@ -77,14 +91,98 @@ module.exports = async function (context, req) {
       return;
     }
 
-    // Real API implementation would go here
-    // For now, return mock response
+    // Real Azure OpenAI implementation
+    const client = getOpenAIClient();
+    const members = [];
+    
+    // Call each council member (model) in parallel
+    const memberPromises = selectedMemberIds.map(async (modelId) => {
+      try {
+        const completion = await client.chat.completions.create({
+          model: modelId,
+          messages: [
+            {
+              role: 'system',
+              content: `You are ${modelId}, a council member providing expert analysis. Give a structured, insightful response focusing on your unique perspective. Be concise but thorough.`
+            },
+            {
+              role: 'user', 
+              content: question
+            }
+          ],
+          max_tokens: 500,
+          temperature: 0.7
+        });
+
+        return {
+          id: modelId,
+          name: modelId.toUpperCase(),
+          provider: 'Azure OpenAI',
+          color: getModelColor(modelId),
+          summary: completion.choices[0].message.content
+        };
+      } catch (error) {
+        context.log('Error calling model', modelId, error);
+        return {
+          id: modelId,
+          name: modelId.toUpperCase(),
+          provider: 'Azure OpenAI',
+          color: getModelColor(modelId),
+          summary: `Error: Unable to get response from ${modelId}. ${error.message}`
+        };
+      }
+    });
+
+    const memberResults = await Promise.all(memberPromises);
+    
+    // Generate chairman summary
+    let chairmanSummary = "Council analysis complete.";
+    try {
+      const summaryCompletion = await client.chat.completions.create({
+        model: chairmanModelId,
+        messages: [
+          {
+            role: 'system',
+            content: 'You are the Council Chairman. Synthesize the council members\' analyses into a cohesive summary with key insights and recommendations.'
+          },
+          {
+            role: 'user',
+            content: `Question: ${question}\n\nCouncil Members' Responses:\n${memberResults.map(m => `${m.name}: ${m.summary}`).join('\n\n')}\n\nProvide a synthesis:`
+          }
+        ],
+        max_tokens: 300,
+        temperature: 0.5
+      });
+      chairmanSummary = summaryCompletion.choices[0].message.content;
+    } catch (error) {
+      context.log('Error generating chairman summary', error);
+      chairmanSummary = "Unable to generate chairman summary. Please review individual member responses.";
+    }
+
+    const response = {
+      question,
+      members: memberResults,
+      chairman: {
+        id: chairmanModelId,
+        name: `${chairmanModelId.toUpperCase()} (Chairman)`,
+        provider: 'Azure OpenAI',
+        color: getModelColor(chairmanModelId),
+        summary: chairmanSummary
+      },
+      timestamp: new Date().toISOString(),
+      mode: 'live'
+    };
+
     context.res = {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
       },
+      body: response
+    };
       body: { message: 'Real Azure OpenAI integration coming in Phase 3' }
     };
 
