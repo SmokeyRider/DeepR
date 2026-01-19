@@ -3,6 +3,7 @@ module.exports = async function (context, req) {
 
   const useMock = process.env.USE_MOCK === 'true';
   const hasOpenAIKey = !!(process.env.AZURE_OPENAI_API_KEY || process.env.AI_INTEGRATIONS_OPENAI_API_KEY);
+  const actualMode = (useMock || !hasOpenAIKey) ? 'mock' : 'live';
 
   context.res = {
     status: 200,
@@ -15,7 +16,7 @@ module.exports = async function (context, req) {
     body: {
       status: 'healthy',
       timestamp: new Date().toISOString(),
-      mode: useMock ? 'mock' : 'live',
+      mode: actualMode,
       hasKeys: hasOpenAIKey,
       environment: 'Azure Functions'
     }
