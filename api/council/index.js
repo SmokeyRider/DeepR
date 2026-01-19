@@ -47,7 +47,7 @@ const getOpenAIClient = () => {
   return new AzureOpenAI({
     apiKey,
     endpoint: endpoint.replace(/\/$/, ''), // Remove trailing slash if present
-    apiVersion: '2024-08-01-preview'
+    apiVersion: '2024-12-01-preview'
   });
 };
 
