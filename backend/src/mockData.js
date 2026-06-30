@@ -3,8 +3,8 @@
 export const mockCouncilResponses = {
   members: [
     {
-      id: 'gpt-5.1',
-      name: 'GPT-5.1',
+      id: 'gpt-5.3',
+      name: 'GPT-5.3',
       provider: 'OpenAI Flagship',
       confidence: 87,
       summary: 'Based on comprehensive analysis, I recommend a microservices architecture with containerization for optimal scalability and maintainability.',
@@ -26,7 +26,7 @@ export const mockCouncilResponses = {
     },
     {
       id: 'claude-opus',
-      name: 'Claude Opus 4.5',
+      name: 'Claude Opus 4.6',
       provider: 'Anthropic Flagship',
       confidence: 92,
       summary: 'I strongly advocate for a modular monolith approach initially, with clear domain boundaries that allow future microservices extraction.',
@@ -81,7 +81,7 @@ export const mockCouncilResponses = {
   ],
   chairman: {
     name: 'Chairman',
-    model: 'Claude Opus 4.5',
+    model: 'Claude Opus 4.6',
     finalDecision: `After synthesizing inputs from all council members, I present the following recommendation:
 
 ## Final Recommendation: Modular Monolith with Serverless Extensions
@@ -93,9 +93,9 @@ export const mockCouncilResponses = {
 - **Event-driven patterns** provide flexibility for future evolution
 
 ### Key Disagreements Addressed 🔄
-- **GPT-5.1** favors immediate microservices, but this adds complexity prematurely
+- **GPT-5.3** favors immediate microservices, but this adds complexity prematurely
 - **Gemini 3 Pro's** serverless approach is valuable for auxiliary functions, not core services
-- **Claude Opus 4.5's** modular monolith provides the best balance
+- **Claude Opus 4.6's** modular monolith provides the best balance
 
 ### Synthesized Architecture:
 1. **Core Platform**: Modular monolith with clear bounded contexts

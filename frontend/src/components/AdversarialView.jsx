@@ -5,23 +5,23 @@ import { SaveShareButtons } from './SaveShareButtons';
 
 const defaultRoles = [
   { 
-    id: 'advocate', 
-    name: 'Advocate', 
-    model: 'gpt-5.1', 
+    id: 'advocate',
+    name: 'Advocate',
+    model: 'gpt-5.3',
     focus: 'Strong initial opinion',
     instructions: 'Provide your strongest, clearest opinion. Take a firm stance. Do not hedge. Present your reasoning in a structured way.'
   },
   { 
-    id: 'challenger', 
-    name: 'Challenger', 
-    model: 'gpt-5.1', 
+    id: 'challenger',
+    name: 'Challenger',
+    model: 'claude-opus-4-6',
     focus: 'Critique and attack reasoning',
     instructions: 'Critique the Advocate\'s argument. Identify logical flaws, missing evidence, weak assumptions, and alternative interpretations. Be adversarial, rigorous, and unsparing.'
   },
   { 
-    id: 'arbiter', 
-    name: 'Arbiter', 
-    model: 'gpt-5.1', 
+    id: 'arbiter',
+    name: 'Arbiter',
+    model: 'gpt-5.3',
     focus: 'Evaluate and synthesize',
     instructions: 'Evaluate both the Advocate\'s argument and the Challenger\'s critique. Identify which points hold up and synthesize the strongest possible final position.'
   },
@@ -46,7 +46,7 @@ function AdversarialRoleSelector({ roles, onRolesChange }) {
         setAvailableModels(data.availableModels || []);
         
         if (data.availableModels?.length && roles) {
-          const defaultModel = data.availableModels[0]?.id || 'gpt-5.1';
+          const defaultModel = data.availableModels[0]?.id || 'gpt-5.3';
           const updatedRoles = roles.map((role) => {
             const modelExists = data.availableModels.some(m => m.id === role.model);
             if (!modelExists) {

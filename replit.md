@@ -40,29 +40,24 @@ DeepR is an AI decision-making framework demo that showcases three LLM orchestra
 ## Multi-Provider LLM Support
 The app supports 4 LLM providers via **Replit AI Integrations** (no API keys required, charges billed to Replit credits):
 
-### OpenAI Models (12 models)
-- gpt-5.2, gpt-5.1, gpt-5, gpt-5-mini, gpt-5-nano
-- gpt-4.1, gpt-4.1-mini, gpt-4o, gpt-4o-mini
-- o4-mini, o3, o3-mini
+### OpenAI Models (5 models)
+- gpt-5.3 (flagship), gpt-5.2, gpt-5.1
+- gpt-5-mini, gpt-5-nano
 
-### Anthropic Claude Models (4 models)
-- claude-opus-4-5 (most capable)
+### Anthropic Claude Models (3 models)
+- claude-opus-4-6 (most capable)
 - claude-sonnet-4-5 (balanced)
 - claude-haiku-4-5 (fastest)
-- claude-opus-4-1
 
 ### Google Gemini Models (4 models)
-- gemini-3-pro-preview, gemini-3-flash-preview
+- gemini-3-pro, gemini-3-flash
 - gemini-2.5-pro, gemini-2.5-flash
 
-### OpenRouter Models (9+ models, access to 300+)
-- meta-llama/llama-4-maverick (FREE), meta-llama/llama-4-scout (FREE)
-- meta-llama/llama-3.3-70b-instruct
-- deepseek/deepseek-chat-v3-0324, deepseek/deepseek-r1
+### OpenRouter Models (5 open-source, access to 300+)
+- deepseek/deepseek-v4-flash, deepseek/deepseek-v4
+- z-ai/glm-5.2
+- meta-llama/llama-4-maverick
 - qwen/qwen3-32b
-- mistralai/mistral-small-3.1-24b-instruct (FREE)
-- google/gemini-2.5-flash-preview
-- x-ai/grok-3-mini-beta
 
 ## Running the Application
 The workflow runs both frontend and backend concurrently:

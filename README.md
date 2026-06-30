@@ -161,9 +161,9 @@ POST /api/adversarial/stream  # Streaming responses
 Body: { 
   "question": "Your research question",
   "roles": [
-    { "id": "advocate", "model": "gpt-5.1", ... },
-    { "id": "challenger", "model": "gpt-5.1", ... },
-    { "id": "arbiter", "model": "gpt-5.1", ... }
+    { "id": "advocate", "model": "gpt-5.3", ... },
+    { "id": "challenger", "model": "gpt-5.3", ... },
+    { "id": "arbiter", "model": "gpt-5.3", ... }
   ],
   "turnLimit": "smart" // or "1", "2", "3"
 }
@@ -208,7 +208,7 @@ AI_INTEGRATIONS_OPENROUTER_API_KEY=sk-or-...
 Edit `backend/src/config.js`:
 ```javascript
 councilMembers: [
-  { id: 'new-model', name: 'New Model', model: 'gpt-5.1', provider: 'Provider Name', color: '#hex' },
+  { id: 'new-model', name: 'New Model', model: 'gpt-5.3', provider: 'Provider Name', color: '#hex' },
   // ...
 ]
 ```
