@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { CheckSquare, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 
-const defaultSelectedMembers = ['gpt-5.1', 'claude-sonnet-4-5', 'gemini-2.5-flash'];
-const defaultChairman = 'gpt-5.1';
+const defaultSelectedMembers = ['gpt-5.3', 'claude-sonnet-4-5', 'gemini-3-flash'];
+const defaultChairman = 'gpt-5.3';
 
 export function CouncilMemberSelector({ selectedMembers, onSelectionChange, chairmanModel, onChairmanChange }) {
   const [availableModels, setAvailableModels] = useState([]);

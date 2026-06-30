@@ -22,7 +22,7 @@ export function DxORoleSelector({ roles, onRolesChange }) {
         setAvailableModels(data.availableModels || []);
         
         if (data.availableModels?.length && roles) {
-          const defaultModel = data.availableModels[0]?.id || 'gpt-5.1';
+          const defaultModel = data.availableModels[0]?.id || 'gpt-5.3';
           const updatedRoles = roles.map((role, index) => {
             const modelExists = data.availableModels.some(m => m.id === role.model);
             if (!modelExists) {
@@ -51,7 +51,7 @@ export function DxORoleSelector({ roles, onRolesChange }) {
   };
 
   const addRole = () => {
-    const defaultModel = availableModels[0]?.id || 'gpt-5.1';
+    const defaultModel = availableModels[0]?.id || 'gpt-5.3';
     const newRole = {
       id: `role-${Date.now()}`,
       name: 'New Role',
