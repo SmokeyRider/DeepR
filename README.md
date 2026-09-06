@@ -228,6 +228,13 @@ Edit the role configuration in `backend/src/config.js` or modify prompts in `bac
 5. **Select Models** - Choose from multiple AI providers (OpenAI, Anthropic, Google, OpenRouter)
 6. **Adversarial Turns** - Configure debate cycles for deeper analysis
 
+## Deployment
+
+The frontend deploys to Azure Static Web Apps via GitHub Actions on push to
+`main`. If the live site stops updating, the most common cause is a missing
+deployment-token secret. See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for the
+full setup and troubleshooting steps.
+
 ## License
 
 MIT
